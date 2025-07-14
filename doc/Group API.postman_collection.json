@@ -1,0 +1,1027 @@
+{
+	"info": {
+		"_postman_id": "c4e69723-28ff-4b6f-80e0-07e3a783b8bf",
+		"name": "Group API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "23458"
+	},
+	"item": [
+		{
+			"name": "Group",
+			"item": [
+				{
+					"name": "Search Groups",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/groups?oldId=20000014&perPage=4&includeParentGroup=true&includeSubGroups=true&oneLevel=true&selfRegister=false",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"groups"
+							],
+							"query": [
+								{
+									"key": "oldId",
+									"value": "20000014"
+								},
+								{
+									"key": "universalUID",
+									"value": "00000000",
+									"disabled": true
+								},
+								{
+									"key": "memberId",
+									"value": "22838965",
+									"disabled": true
+								},
+								{
+									"key": "membershipType",
+									"value": "user",
+									"disabled": true
+								},
+								{
+									"key": "name",
+									"value": "upDated",
+									"disabled": true
+								},
+								{
+									"key": "perPage",
+									"value": "4"
+								},
+								{
+									"key": "includeParentGroup",
+									"value": "true"
+								},
+								{
+									"key": "includeSubGroups",
+									"value": "true"
+								},
+								{
+									"key": "oneLevel",
+									"value": "true"
+								},
+								{
+									"key": "selfRegister",
+									"value": "false"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Group by id",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/groups/d55cc318-b1f4-4fb9-b3fa-991f0a237baf?includeParentGroup=true&flattenGroupIdTree=true&oneLevel=false&fields=id,name,oldId",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"groups",
+								"d55cc318-b1f4-4fb9-b3fa-991f0a237baf"
+							],
+							"query": [
+								{
+									"key": "includeSubGroups",
+									"value": "true",
+									"disabled": true
+								},
+								{
+									"key": "includeParentGroup",
+									"value": "true"
+								},
+								{
+									"key": "flattenGroupIdTree",
+									"value": "true"
+								},
+								{
+									"key": "oneLevel",
+									"value": "false"
+								},
+								{
+									"key": "fields",
+									"value": "id,name,oldId"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Group",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"new group 003\",\n    \"privateGroup\": true,\n    \"selfRegister\": false,\n    \"status\": \"active\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/groups",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"groups"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Group with full fields",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"new group 103\",\n    \"description\": \"new group description\",\n    \"organizationId\": \"org123\",\n    \"domain\": \"www.test.com\",\n    \"ssoId\": \"sso456\",\n    \"privateGroup\": true,\n    \"selfRegister\": false,\n    \"status\": \"active\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/groups",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"groups"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Group",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"new group updated 4\",\n    \"status\": \"inactive\",\n    \"privateGroup\": true,\n    \"selfRegister\": false,\n    \"oldId\": \"123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/groups/f246d834-5bae-4bea-89cc-0911746180f3",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"groups",
+								"f246d834-5bae-4bea-89cc-0911746180f3"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Patch Group",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"oldId\":  \"234\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/groups/f246d834-5bae-4bea-89cc-0911746180f3",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"groups",
+								"f246d834-5bae-4bea-89cc-0911746180f3"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Group",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/groups/11111111-2222-3333-9999-444444444444",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"groups",
+								"11111111-2222-3333-9999-444444444444"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Group with challenge exists",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/groups/546bb184-1338-4979-b4a4-f0e82e2602a8",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"groups",
+								"546bb184-1338-4979-b4a4-f0e82e2602a8"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Group By OldId",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/groups/oldId/20000014?includeSubGroups=true&flattenGroupIdTree=true&oneLevel=false&fields=id,name,oldId",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"groups",
+								"oldId",
+								"20000014"
+							],
+							"query": [
+								{
+									"key": "includeSubGroups",
+									"value": "true"
+								},
+								{
+									"key": "includeParentGroup",
+									"value": "true",
+									"disabled": true
+								},
+								{
+									"key": "flattenGroupIdTree",
+									"value": "true"
+								},
+								{
+									"key": "oneLevel",
+									"value": "false"
+								},
+								{
+									"key": "fields",
+									"value": "id,name,oldId"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Flush Cache",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/groups/flushCache",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"groups",
+								"flushCache"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Group Members",
+			"item": [
+				{
+					"name": "Get Group Members",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/groups/2fd8ba9f-e229-40f8-9f3e-6a75aba7c8f1/members",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"groups",
+								"2fd8ba9f-e229-40f8-9f3e-6a75aba7c8f1",
+								"members"
+							],
+							"query": [
+								{
+									"key": "perPage",
+									"value": "2",
+									"disabled": true
+								},
+								{
+									"key": "page",
+									"value": "1",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Group Member",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/groups/2fd8ba9f-e229-40f8-9f3e-6a75aba7c8f1/members/8uHVTW2WHp8BbBPX7J0YTAwgYbYTfjsM",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"groups",
+								"2fd8ba9f-e229-40f8-9f3e-6a75aba7c8f1",
+								"members",
+								"8uHVTW2WHp8BbBPX7J0YTAwgYbYTfjsM"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Member Groups",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/groups/memberGroups/22838965",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"groups",
+								"memberGroups",
+								"22838965"
+							],
+							"query": [
+								{
+									"key": "uuid",
+									"value": "true",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Group Members Count",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/groups/2fd8ba9f-e229-40f8-9f3e-6a75aba7c8f1/membersCount?includeSubGroups=true",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"groups",
+								"2fd8ba9f-e229-40f8-9f3e-6a75aba7c8f1",
+								"membersCount"
+							],
+							"query": [
+								{
+									"key": "includeSubGroups",
+									"value": "true"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Group Validity Check",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/groups/validityCheck/22838965/20000014",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"groups",
+								"validityCheck",
+								"22838965",
+								"20000014"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Groups Member Count",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/groups/memberGroups/groupMembersCount?organizationId=111&universalUID=22838965&includeSubGroups=true",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"groups",
+								"memberGroups",
+								"groupMembersCount"
+							],
+							"query": [
+								{
+									"key": "organizationId",
+									"value": "111"
+								},
+								{
+									"key": "universalUID",
+									"value": "22838965"
+								},
+								{
+									"key": "includeSubGroups",
+									"value": "true"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add Group Member User",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"memberId\": \"user123\",\n    \"membershipType\": \"user\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/groups/2fd8ba9f-e229-40f8-9f3e-6a75aba7c8f1/members",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"groups",
+								"2fd8ba9f-e229-40f8-9f3e-6a75aba7c8f1",
+								"members"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add Group Member Group",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"memberId\": \"110692e5-3bc9-47d5-b7c8-70fefaba0662\",\n    \"membershipType\": \"group\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/groups/2fd8ba9f-e229-40f8-9f3e-6a75aba7c8f1/members",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"groups",
+								"2fd8ba9f-e229-40f8-9f3e-6a75aba7c8f1",
+								"members"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add Group Members",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"members\": [\n        {\n            \"memberId\": \"beb4cb39-6e06-45ec-b1da-b02d3529f2a7\",\n            \"membershipType\": \"group\"\n        },\n        {\n            \"memberId\": \"user789\",\n            \"membershipType\": \"user\"\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/groups/2fd8ba9f-e229-40f8-9f3e-6a75aba7c8f1/members",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"groups",
+								"2fd8ba9f-e229-40f8-9f3e-6a75aba7c8f1",
+								"members"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Group Member Group",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/groups/2fd8ba9f-e229-40f8-9f3e-6a75aba7c8f1/members/110692e5-3bc9-47d5-b7c8-70fefaba0662?universalUID=xxx",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"groups",
+								"2fd8ba9f-e229-40f8-9f3e-6a75aba7c8f1",
+								"members",
+								"110692e5-3bc9-47d5-b7c8-70fefaba0662"
+							],
+							"query": [
+								{
+									"key": "universalUID",
+									"value": "xxx"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Group Members",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"members\": [\n        \"23274118\",\n        \"0eda0b91-3cc5-4778-8e5f-1d9a67ecae12\",\n        \"999999999\"\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/groups/2fd8ba9f-e229-40f8-9f3e-6a75aba7c8f1/members",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"groups",
+								"2fd8ba9f-e229-40f8-9f3e-6a75aba7c8f1",
+								"members"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "SubGroup",
+			"item": [
+				{
+					"name": "Add SubGroup",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"new subgroup 001\",\n    \"description\": \"description subgroup\",\n    \"privateGroup\": true,\n    \"selfRegister\": false,\n    \"status\": \"active\",\n    \"domain\": \"ddd\",\n    \"ssoId\": \"sso123\",\n    \"organizationId\": \"id456\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/groups/2fd8ba9f-e229-40f8-9f3e-6a75aba7c8f1/subGroup",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"groups",
+								"2fd8ba9f-e229-40f8-9f3e-6a75aba7c8f1",
+								"subGroup"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete SubGroup",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/groups/2fd8ba9f-e229-40f8-9f3e-6a75aba7c8f1/subGroup/546bb184-1338-4979-b4a4-f0e82e2602a8",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"groups",
+								"2fd8ba9f-e229-40f8-9f3e-6a75aba7c8f1",
+								"subGroup",
+								"546bb184-1338-4979-b4a4-f0e82e2602a8"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "GroupRole",
+			"item": [
+				{
+					"name": "Get Group Roles",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/group-roles/users/8uHVTW2WHp8BbBPX7J0YTAwgYbYTfjsM",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"group-roles",
+								"users",
+								"8uHVTW2WHp8BbBPX7J0YTAwgYbYTfjsM"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Group Role",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"groupId\": \"2fd8ba9f-e229-40f8-9f3e-6a75aba7c8f1\",\n    \"role\": \"groupManager\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/group-roles/users/8uHVTW2WHp8BbBPX7J0YTAwgYbYTfjsM",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"group-roles",
+								"users",
+								"8uHVTW2WHp8BbBPX7J0YTAwgYbYTfjsM"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add Group Role",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"groupId\": \"2fd8ba9f-e229-40f8-9f3e-6a75aba7c8f1\",\n    \"role\": \"groupManager\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/group-roles/users/8uHVTW2WHp8BbBPX7J0YTAwgYbYTfjsM",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"group-roles",
+								"users",
+								"8uHVTW2WHp8BbBPX7J0YTAwgYbYTfjsM"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Health",
+			"item": [
+				{
+					"name": "Health",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:3000/v6/groups/health",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"v6",
+								"groups",
+								"health"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

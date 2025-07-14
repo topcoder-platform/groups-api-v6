@@ -1,0 +1,77 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearchPostgres"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enum for allowed group
+enum GroupStatus {
+  active
+  inactive
+}
+
+model Group {
+  id             String       @id @default(uuid())
+  name           String       @unique
+  description    String?
+  organizationId String
+  domain         String
+  ssoId          String
+  oldId          String?
+  privateGroup   Boolean
+  selfRegister   Boolean
+  status         GroupStatus
+  createdAt      DateTime     @default(now())
+  createdBy      String
+  updatedAt      DateTime     @updatedAt
+  updatedBy      String?
+
+  members        GroupMembership[]
+
+  parentGroups   Group[]  @relation("ParentSubGroups")
+  subGroups      Group[]  @relation("ParentSubGroups")
+
+  // Indexes for faster searches
+  @@index([name]) // Index for filtering by name
+  @@index([status]) // Index for filtering by status
+  @@index([oldId]) // Index for filtering by oldId
+}
+
+model GroupMembership {
+  id               String    @id @default(uuid())
+  groupId          String
+  memberId         String
+  membershipType   String
+  roles            Json?
+  createdAt        DateTime  @default(now())
+  createdBy        String
+  updatedAt        DateTime  @updatedAt
+  updatedBy        String?
+
+  group            Group     @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, memberId])
+  @@index([groupId]) // Index for joining with group table
+  @@index([memberId]) // Index for filtering by memberId
+	@@map("GroupMember")
+}
+
+// This user table is only used in this group challenge
+model User {
+  id               String    @id @default(uuid())
+  universalUID     String
+  createdAt        DateTime  @default(now())
+  createdBy        String
+  updatedAt        DateTime  @updatedAt
+  updatedBy        String?
+}

@@ -22,14 +22,54 @@ async function bootstrap() {
   app.setGlobalPrefix(`${apiVer}`);
 
   // CORS related settings
+  const topcoderOriginPatterns = [
+    /^https?:\/\/([\w-]+\.)*topcoder\.com(?::\d+)?$/i,
+    /^https?:\/\/([\w-]+\.)*topcoder-dev\.com(?::\d+)?$/i,
+  ];
+
+  const allowList: (string | RegExp)[] = ['http://localhost:3000', /\.localhost:3000$/];
+
+  if (process.env.CORS_ALLOWED_ORIGIN) {
+    try {
+      allowList.push(new RegExp(process.env.CORS_ALLOWED_ORIGIN));
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      logger.warn(
+        `Invalid CORS_ALLOWED_ORIGIN pattern (${process.env.CORS_ALLOWED_ORIGIN}): ${errorMessage}`,
+      );
+    }
+  }
+
+  const isAllowedOrigin = (origin: string): boolean => {
+    if (allowList.some((allowedOrigin) => {
+      if (allowedOrigin instanceof RegExp) {
+        return allowedOrigin.test(origin);
+      }
+      return allowedOrigin === origin;
+    })) {
+      return true;
+    }
+
+    return topcoderOriginPatterns.some((pattern) => pattern.test(origin));
+  };
+
   const corsConfig: cors.CorsOptions = {
     allowedHeaders:
       'Origin, X-Requested-With, Content-Type, Accept, Authorization, Access-Control-Allow-Origin, Access-Control-Allow-Headers,currentOrg,overrideOrg,x-atlassian-cloud-id,x-api-key,x-orgid',
     credentials: true,
-    origin: process.env.CORS_ALLOWED_ORIGIN
-      ? new RegExp(process.env.CORS_ALLOWED_ORIGIN)
-      : ['http://localhost:3000', /\.localhost:3000$/,  'https://topcoder.com', 'https://topcoder-dev.com', /\.topcoder-dev\.com$/, /\.topcoder\.com$/],
     methods: 'GET, POST, OPTIONS, PUT, DELETE, PATCH',
+    origin: (requestOrigin, callback) => {
+      if (!requestOrigin) {
+        return callback(null, false);
+      }
+
+      if (isAllowedOrigin(requestOrigin)) {
+        return callback(null, requestOrigin);
+      }
+
+      return callback(null, false);
+    },
   };
   app.use(cors(corsConfig));
   logger.log('CORS configuration applied');

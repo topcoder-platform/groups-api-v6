@@ -128,10 +128,6 @@ export class GroupService {
 
     if (criteria.oldId) {
       prismaFilter.where.oldId = criteria.oldId;
-    } else {
-      prismaFilter.where.oldId = {
-        not: null,
-      };
     }
     if (criteria.name) {
       prismaFilter.where.name = {
@@ -352,13 +348,18 @@ export class GroupService {
       await checkGroupName(dto.name, '', tx);
 
       // create group
+      const createdBy = authUser.userId ? authUser.userId : '00000000';
+      const createdAt = new Date().toISOString();
       const groupData = {
         ...dto,
         domain: dto.domain || '',
         ssoId: dto.ssoId || '',
         organizationId: dto.organizationId || '',
-        createdBy: authUser.userId ? authUser.userId : '00000000',
-        createdAt: new Date().toISOString(),
+        createdBy,
+        createdAt,
+        // Initialize updated fields to match created fields on creation
+        updatedBy: createdBy,
+        updatedAt: createdAt,
       };
 
       const result = await tx.group.create({ data: groupData });

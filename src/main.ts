@@ -27,7 +27,10 @@ async function bootstrap() {
     /^https?:\/\/([\w-]+\.)*topcoder-dev\.com(?::\d+)?$/i,
   ];
 
-  const allowList: (string | RegExp)[] = ['http://localhost:3000', /\.localhost:3000$/];
+  const allowList: (string | RegExp)[] = [
+    'http://localhost:3000',
+    /\.localhost:3000$/,
+  ];
 
   if (process.env.CORS_ALLOWED_ORIGIN) {
     try {
@@ -42,12 +45,14 @@ async function bootstrap() {
   }
 
   const isAllowedOrigin = (origin: string): boolean => {
-    if (allowList.some((allowedOrigin) => {
-      if (allowedOrigin instanceof RegExp) {
-        return allowedOrigin.test(origin);
-      }
-      return allowedOrigin === origin;
-    })) {
+    if (
+      allowList.some((allowedOrigin) => {
+        if (allowedOrigin instanceof RegExp) {
+          return allowedOrigin.test(origin);
+        }
+        return allowedOrigin === origin;
+      })
+    ) {
       return true;
     }
 

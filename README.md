@@ -83,3 +83,34 @@ For a read-only scope M2M token, use:
 
 - then you can use Postman to test all apis
 - Swagger docs are accessible at `http://localhost:3000/api-docs`
+
+**Downstream Usage**
+
+- This service is consumed by multiple Topcoder apps. Below is a quick map of where and how it’s called to help with debugging.
+
+**platform-ui**
+
+- Admin pages manage groups and memberships using v6 endpoints:
+  - List/search groups: `GET /v6/groups?page=1&perPage=10000` (optionally filter by `name`, or by `memberId` + `membershipType=user`). See platform-ui/src/apps/admin/src/lib/services/groups.service.ts.
+  - Fetch group by id: `GET /v6/groups/{id}` (optional `fields` query). See platform-ui/src/apps/admin/src/lib/services/groups.service.ts.
+  - List group members: `GET /v6/groups/{id}/members?page&perPage`. See platform-ui/src/apps/admin/src/lib/services/groups.service.ts.
+  - Create group: `POST /v6/groups`. See platform-ui/src/apps/admin/src/lib/services/groups.service.ts.
+  - Add member: `POST /v6/groups/{id}/members` with `{ membershipType: 'user'|'group', memberId }`. See platform-ui/src/apps/admin/src/lib/services/groups.service.ts.
+  - Remove member: `DELETE /v6/groups/{id}/members/{memberId}`. See platform-ui/src/apps/admin/src/lib/services/groups.service.ts.
+- Local dev proxy maps both `/v5/groups` and `/v6/groups` to this service on port 3001. See platform-ui/src/config/environments/local.env.ts.
+
+**community-app**
+
+- Used server-side to expand community metadata group IDs to include descendants (group trees). The code acquires an M2M token and calls the groups service helper, which in turn queries the Groups API for a group’s tree of IDs. See community-app/src/server/services/communities.js and community-app/src/server/services/communities.js.
+- Community App requires M2M credentials with access to Groups API for this logic. See community-app/README.md.
+- Equivalent v6 endpoint for tree expansion is: `GET /v6/groups/{id}?flattenGroupIdTree=true` (also supports `includeSubGroups`, `includeParentGroup`, `oneLevel`).
+
+**work-manager**
+
+- Populates group selectors and filters challenge visibility:
+  - Search groups by name for autocomplete: `GET /v6/groups?name={query}&perPage={large}`. See work-manager/src/components/ChallengeEditor/Groups-Field/index.js.
+  - Load current user’s groups when creating/editing a challenge: `GET /v6/groups?membershipType=user&memberId={tcUserId}&perPage={large}`. See work-manager/src/actions/challenges.js.
+  - Fetch group detail by id: `GET /v6/groups/{id}`. See work-manager/src/services/challenges.js.
+- API base configuration points to v6 in dev/local and v5 in prod (for backward compatibility):
+  - Dev: work-manager/config/constants/development.js.
+  - Local: work-manager/config/constants/local.js and work-manager/config/constants/local.js.

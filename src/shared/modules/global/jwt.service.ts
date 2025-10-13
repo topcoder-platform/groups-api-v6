@@ -35,6 +35,15 @@ const TEST_M2M_TOKENS: Record<string, string[]> = {
   'm2m-token-groups': [Scope.AllGroups],
 };
 
+const SCOPE_SYNONYMS: Record<string, string[]> = {
+  'read:group': [Scope.ReadGroups],
+  [Scope.ReadGroups]: ['read:group'],
+  'write:group': [Scope.WriteGroups],
+  [Scope.WriteGroups]: ['write:group'],
+  'all:group': [Scope.AllGroups],
+  [Scope.AllGroups]: ['all:group'],
+};
+
 @Injectable()
 export class JwtService implements OnModuleInit {
   private jwksClientInstance: jwksClient.JwksClient;
@@ -177,16 +186,30 @@ export class JwtService implements OnModuleInit {
    */
   private expandScopes(scopes: string[]): string[] {
     const expandedScopes = new Set<string>();
+    const queue = [...scopes];
 
-    // Add all original scopes
-    scopes.forEach((scope) => expandedScopes.add(scope));
-
-    // Expand all "all:*" scopes
-    scopes.forEach((scope) => {
-      if (ALL_SCOPE_MAPPINGS[scope]) {
-        ALL_SCOPE_MAPPINGS[scope].forEach((s) => expandedScopes.add(s));
+    while (queue.length > 0) {
+      const scope = queue.shift();
+      if (!scope || expandedScopes.has(scope)) {
+        continue;
       }
-    });
+
+      expandedScopes.add(scope);
+
+      const synonyms = SCOPE_SYNONYMS[scope] ?? [];
+      synonyms.forEach((alias) => {
+        if (!expandedScopes.has(alias)) {
+          queue.push(alias);
+        }
+      });
+
+      const mappedScopes = ALL_SCOPE_MAPPINGS[scope] ?? [];
+      mappedScopes.forEach((alias) => {
+        if (!expandedScopes.has(alias)) {
+          queue.push(alias);
+        }
+      });
+    }
 
     return Array.from(expandedScopes);
   }

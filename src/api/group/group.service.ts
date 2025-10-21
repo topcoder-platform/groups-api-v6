@@ -37,7 +37,7 @@ import {
 
 import { M2MService } from 'src/shared/modules/global/m2m.service';
 
-const ADMIN_GROUP_FIELDS = ['status'];
+const ADMIN_GROUP_FIELDS: string[] = [];
 
 export const ALLOWED_FIELD_NAMES = [
   'id',
@@ -52,6 +52,7 @@ export const ALLOWED_FIELD_NAMES = [
   'domain',
   'organizationId',
   'oldId',
+  'status',
 ];
 
 @Injectable()

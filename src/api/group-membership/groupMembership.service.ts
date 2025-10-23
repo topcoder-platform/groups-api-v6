@@ -214,12 +214,6 @@ export class GroupMembershipService {
 
       let memberOldId;
 
-      if (!group.oldId || group.oldId.length <= 0) {
-        throw new ForbiddenException(
-          'Parent group is not ready yet, try after sometime',
-        );
-      }
-
       const memberId = dto.memberId
         ? dto.memberId
         : (dto.universalUID as string);

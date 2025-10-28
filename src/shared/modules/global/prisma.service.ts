@@ -12,6 +12,11 @@ export class PrismaService
 
   constructor(private readonly prismaErrorService?: PrismaErrorService) {
     super({
+      transactionOptions: {
+        timeout: process.env.GROUPS_SERVICE_PRISMA_TIMEOUT
+          ? parseInt(process.env.GROUPS_SERVICE_PRISMA_TIMEOUT, 10)
+          : 10000,
+      },
       log: [
         { level: 'query', emit: 'event' },
         { level: 'info', emit: 'event' },

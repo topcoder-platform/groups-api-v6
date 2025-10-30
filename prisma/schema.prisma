@@ -45,6 +45,10 @@ model Group {
   @@index([name]) // Index for filtering by name
   @@index([status]) // Index for filtering by status
   @@index([oldId]) // Index for filtering by oldId
+  @@index([status, organizationId])
+  @@index([domain])
+  @@index([ssoId])
+  @@index([privateGroup, status])
 }
 
 model GroupMembership {
@@ -63,7 +67,8 @@ model GroupMembership {
   @@unique([groupId, memberId])
   @@index([groupId]) // Index for joining with group table
   @@index([memberId]) // Index for filtering by memberId
-	@@map("GroupMember")
+  @@index([memberId, membershipType])
+  @@map("GroupMember")
 }
 
 // This user table is only used in this group challenge
@@ -74,4 +79,6 @@ model User {
   createdBy        String
   updatedAt        DateTime  @updatedAt
   updatedBy        String?
+
+  @@index([universalUID])
 }

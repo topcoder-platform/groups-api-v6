@@ -226,68 +226,100 @@ export class GroupService {
       parseCommaSeparatedString(criteria.fields, ALLOWED_FIELD_NAMES) ||
       ALLOWED_FIELD_NAMES;
 
-    const prismaFilter: any = {
-      where: {
-        id: groupId,
-      },
+    const buildPrismaFilter = (whereClause: Record<string, string>) => {
+      const prismaFilter: any = {
+        where: {
+          ...whereClause,
+        },
+      };
+
+      if (
+        criteria.includeSubGroups ||
+        criteria.includeParentGroup ||
+        criteria.flattenGroupIdTree
+      ) {
+        prismaFilter.include = {};
+
+        if (criteria.includeSubGroups || criteria.flattenGroupIdTree) {
+          if (criteria.oneLevel) {
+            prismaFilter.include.subGroups = true;
+          } else {
+            // max 3 level subGroups
+            prismaFilter.include.subGroups = {
+              include: {
+                subGroups: {
+                  include: {
+                    subGroups: true,
+                  },
+                },
+              },
+            };
+          }
+        }
+
+        if (criteria.includeParentGroup) {
+          if (criteria.oneLevel) {
+            prismaFilter.include.parentGroups = true;
+          } else {
+            // max 3 level parentGroups
+            prismaFilter.include.parentGroups = {
+              include: {
+                parentGroups: {
+                  include: {
+                    parentGroups: true,
+                  },
+                },
+              },
+            };
+          }
+        }
+      }
+
+      return prismaFilter;
     };
 
+    const lookupOrder: Array<{ field: 'id' | 'oldId'; value: string }> = [];
+
+    if (groupId) {
+      lookupOrder.push({ field: 'id', value: groupId });
+    }
+
     if (oldId) {
-      prismaFilter.where = {
-        oldId: oldId,
-      };
+      lookupOrder.push({ field: 'oldId', value: oldId });
+    } else if (groupId) {
+      lookupOrder.push({ field: 'oldId', value: groupId });
     }
 
-    if (
-      criteria.includeSubGroups ||
-      criteria.includeParentGroup ||
-      criteria.flattenGroupIdTree
-    ) {
-      prismaFilter.include = {};
+    if (!lookupOrder.length) {
+      lookupOrder.push({ field: 'id', value: groupId });
+    }
 
-      if (criteria.includeSubGroups || criteria.flattenGroupIdTree) {
-        if (criteria.oneLevel) {
-          prismaFilter.include.subGroups = true;
-        } else {
-          // max 3 level subGroups
-          prismaFilter.include.subGroups = {
-            include: {
-              subGroups: {
-                include: {
-                  subGroups: true,
-                },
-              },
-            },
-          };
-        }
-      }
-
-      if (criteria.includeParentGroup) {
-        if (criteria.oneLevel) {
-          prismaFilter.include.parentGroups = true;
-        } else {
-          // max 3 level parentGroups
-          prismaFilter.include.parentGroups = {
-            include: {
-              parentGroups: {
-                include: {
-                  parentGroups: true,
-                },
-              },
-            },
-          };
-        }
+    let entity;
+    let resolvedGroupId: string | undefined;
+    for (const lookup of lookupOrder) {
+      const prismaFilter = buildPrismaFilter({ [lookup.field]: lookup.value });
+      // eslint-disable-next-line no-await-in-loop
+      entity = await this.prisma.group.findFirst(prismaFilter);
+      if (entity) {
+        resolvedGroupId = entity.id;
+        break;
       }
     }
 
-    let entity = await this.prisma.group.findFirst(prismaFilter);
     if (!entity) {
-      throw new NotFoundException(`Not found group of id ${groupId}`);
+      const identifier = oldId ?? groupId ?? '';
+      throw new NotFoundException(`Not group found with id or oldId: ${identifier}`);
     }
+
+    const groupIdentifier = resolvedGroupId ?? entity.id;
 
     // if the group is private, the user needs to be a member of the group, or an admin
     if (entity.privateGroup && !isAdmin) {
-      await ensureGroupMember(this.prisma, groupId, authUser.userId || '');
+      await ensureGroupMember(
+        this.prisma,
+        groupIdentifier,
+        authUser.userId || '',
+      );
     }
 
     if (criteria.flattenGroupIdTree) {

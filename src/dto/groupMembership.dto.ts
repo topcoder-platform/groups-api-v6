@@ -107,13 +107,13 @@ export class GetMemberGroupsDto {
     name: 'uuid',
     description: 'whether return uuid',
     type: 'boolean',
-    default: false,
+    default: true,
     required: false,
   })
   @Transform(({ value }) => transformBoolean(value))
   @IsBoolean()
   @IsOptional()
-  uuid: boolean = false;
+  uuid: boolean = true;
 }
 
 export class GetGroupMembersCountDto {

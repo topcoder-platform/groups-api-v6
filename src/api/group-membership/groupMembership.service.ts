@@ -524,15 +524,12 @@ export class GroupMembershipService {
    * @returns response dto
    */
   async getMemberGroups(memberId: string, dto: GetMemberGroupsDto) {
-    const returnUuid = dto.uuid;
+    const returnUuid = dto?.uuid ?? true;
     const memberships = await this.prisma.groupMembership.findMany({
       where: {
         memberId: memberId,
         group: {
           status: GroupStatus.ACTIVE,
-          oldId: {
-            not: null,
-          },
         },
       },
     });
@@ -557,15 +554,15 @@ export class GroupMembershipService {
 
     const groups: any[] = [];
     groupRes.forEach((groupL1) => {
-      if (groupL1.status === GroupStatus.ACTIVE && groupL1.oldId) {
+      if (groupL1.status === GroupStatus.ACTIVE) {
         groups.push(groupL1);
       }
       groupL1.parentGroups.forEach((groupL2) => {
-        if (groupL2.status === GroupStatus.ACTIVE && groupL2.oldId) {
+        if (groupL2.status === GroupStatus.ACTIVE) {
           groups.push(groupL2);
         }
         groupL2.parentGroups.forEach((groupL3) => {
-          if (groupL3.status === GroupStatus.ACTIVE && groupL3.oldId) {
+          if (groupL3.status === GroupStatus.ACTIVE) {
             groups.push(groupL3);
           }
         });

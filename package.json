@@ -39,7 +39,7 @@
     "qs": "^6.14.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "tc-core-library-js": "appirio-tech/tc-core-library-js.git#v3.0.1",
+    "tc-core-library-js": "topcoder-platform/tc-core-library-js.git#master",
     "topcoder-bus-api-wrapper": "^1.0.1",
     "uuid": "^11.1.0"
   },

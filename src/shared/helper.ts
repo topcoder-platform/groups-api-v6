@@ -11,7 +11,7 @@ import { PrismaService } from 'src/shared/modules/global/prisma.service';
 import { GroupStatus } from 'src/shared/enums/groupStatus.enum';
 import { GroupRole } from 'src/shared/enums/groupRole.enum';
 import { MemberShipType } from 'src/shared/enums/memberShipType.enum';
-import * as busApi from 'topcoder-bus-api-wrapper';
+import * as busApi from 'tc-bus-api-wrapper';
 import { CommonConfig } from 'src/shared/config/common.config';
 import { validate } from 'uuid';
 import { JwtUser } from 'src/shared/modules/global/jwt.service';

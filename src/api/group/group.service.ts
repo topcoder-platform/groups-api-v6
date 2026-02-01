@@ -5,6 +5,7 @@ import {
   NotFoundException,
   NotAcceptableException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { pick, uniq } from 'lodash';
 import { HttpService } from '@nestjs/axios';
 import { lastValueFrom } from 'rxjs';
@@ -231,11 +232,11 @@ export class GroupService {
       parseCommaSeparatedString(criteria.fields, ALLOWED_FIELD_NAMES) ||
       ALLOWED_FIELD_NAMES;
 
-    const buildPrismaFilter = (whereClause: Record<string, string>) => {
-      const prismaFilter: Record<string, unknown> = {
-        where: {
-          ...whereClause,
-        },
+    const buildPrismaFilter = (
+      whereClause: Prisma.GroupWhereInput,
+    ): Prisma.GroupFindFirstArgs => {
+      const prismaFilter: Prisma.GroupFindFirstArgs = {
+        where: whereClause,
       };
 
       if (
@@ -243,7 +244,7 @@ export class GroupService {
         criteria.includeParentGroup ||
         criteria.flattenGroupIdTree
       ) {
-        const include: Record<string, unknown> = {};
+        const include: Prisma.GroupInclude = {};
 
         if (criteria.includeSubGroups || criteria.flattenGroupIdTree) {
           if (criteria.oneLevel) {
@@ -304,7 +305,9 @@ export class GroupService {
     let entity;
     let resolvedGroupId: string | undefined;
     for (const lookup of lookupOrder) {
-      const prismaFilter = buildPrismaFilter({ [lookup.field]: lookup.value });
+      const prismaFilter = buildPrismaFilter(
+        lookup.field === 'id' ? { id: lookup.value } : { oldId: lookup.value },
+      );
 
       entity = await this.prisma.group.findFirst(prismaFilter);
       if (entity) {
@@ -498,6 +501,7 @@ export class GroupService {
 
       const response: BulkCreateGroupResponseDto = {
         ...group,
+        status: group.status as GroupStatus,
         memberResults,
       };
 

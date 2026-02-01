@@ -14,6 +14,9 @@ export const CommonConfig = {
   KAFKA_ERROR_TOPIC: process.env.KAFKA_ERROR_TOPIC ?? 'common.error.reporting',
   KAFKA_GROUP_CREATE_TOPIC:
     process.env.KAFKA_GROUP_CREATE_TOPIC ?? 'groups.notification.create',
+  KAFKA_GROUP_BULK_CREATE_TOPIC:
+    process.env.KAFKA_GROUP_BULK_CREATE_TOPIC ??
+    'groups.notification.bulk.create',
   KAFKA_GROUP_UPDATE_TOPIC:
     process.env.KAFKA_GROUP_UPDATE_TOPIC ?? 'groups.notification.update',
   KAFKA_GROUP_DELETE_TOPIC:

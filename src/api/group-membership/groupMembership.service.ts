@@ -554,15 +554,15 @@ export class GroupMembershipService {
 
     const groups: any[] = [];
     groupRes.forEach((groupL1) => {
-      if (groupL1.status === GroupStatus.ACTIVE) {
+      if ((groupL1.status as GroupStatus) === GroupStatus.ACTIVE) {
         groups.push(groupL1);
       }
       groupL1.parentGroups.forEach((groupL2) => {
-        if (groupL2.status === GroupStatus.ACTIVE) {
+        if ((groupL2.status as GroupStatus) === GroupStatus.ACTIVE) {
           groups.push(groupL2);
         }
         groupL2.parentGroups.forEach((groupL3) => {
-          if (groupL3.status === GroupStatus.ACTIVE) {
+          if ((groupL3.status as GroupStatus) === GroupStatus.ACTIVE) {
             groups.push(groupL3);
           }
         });

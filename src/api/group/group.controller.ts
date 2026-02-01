@@ -22,6 +22,8 @@ import {
 import { Request, Response } from 'express';
 import {
   CreateGroupDto,
+  BulkCreateGroupDto,
+  BulkCreateGroupResponseDto,
   GroupResponseDto,
   UpdateGroupDto,
   PatchGroupDto,
@@ -182,6 +184,38 @@ export class GroupController {
     const authUser: JwtUser = req['user'] as JwtUser;
 
     return await this.service.createGroup(authUser, dto);
+  }
+
+  @ApiOperation({
+    summary: 'Bulk create group with members',
+    description: 'Roles: Admin | Copilot | Project Manager | Taleng Manager',
+  })
+  @ApiBody({
+    description: 'Group data',
+    type: BulkCreateGroupDto,
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Group details',
+    type: BulkCreateGroupResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Bad Request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 500, description: 'Internal Error' })
+  @Post('/bulk-create')
+  @ApiBearerAuth()
+  @Roles(
+    UserRole.Admin,
+    UserRole.Copilot,
+    UserRole.ProjectManager,
+    UserRole.TalentManager,
+  )
+  @Scopes(Scope.WriteGroups, Scope.AllGroups)
+  async bulkCreateGroup(@Req() req: Request, @Body() dto: BulkCreateGroupDto) {
+    const authUser: JwtUser = req['user'] as JwtUser;
+
+    return await this.service.bulkCreateGroup(authUser, dto);
   }
 
   @ApiOperation({

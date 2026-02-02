@@ -153,6 +153,13 @@ export class BulkCreateGroupDto {
     description: 'user ids',
     type: [String],
   })
+  @Transform(({ value }: { value: unknown }) =>
+    Array.isArray(value)
+      ? (value as unknown[]).map((item) =>
+          typeof item === 'number' ? String(item) : item,
+        )
+      : value,
+  )
   @IsArray()
   @ArrayNotEmpty()
   @IsString({ each: true })

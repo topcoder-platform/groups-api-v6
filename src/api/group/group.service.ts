@@ -9,6 +9,7 @@ import { Prisma } from '@prisma/client';
 import { pick, uniq } from 'lodash';
 import { HttpService } from '@nestjs/axios';
 import { lastValueFrom } from 'rxjs';
+import { validate as isUuid } from 'uuid';
 import {
   CreateGroupDto,
   BulkCreateGroupDto,
@@ -36,7 +37,6 @@ import {
   checkGroupName,
   deleteGroupCascade,
   ensureGroupMember,
-  ensureUserExists,
   parseCommaSeparatedString,
   postBusEvent,
 } from 'src/shared/helper';
@@ -415,6 +415,56 @@ export class GroupService {
     });
   }
 
+  private async assertUserIdsExist(
+    prismaTx: PrismaService | Prisma.TransactionClient,
+    userIds: string[],
+  ) {
+    if (userIds.length === 0) {
+      return;
+    }
+
+    const uuidIds: string[] = [];
+    const universalIds: string[] = [];
+
+    for (const userId of userIds) {
+      if (isUuid(userId)) {
+        uuidIds.push(userId);
+      } else {
+        universalIds.push(userId);
+      }
+    }
+
+    const orConditions: Prisma.UserWhereInput[] = [];
+    if (uuidIds.length > 0) {
+      orConditions.push({ id: { in: uniq(uuidIds) } });
+    }
+    if (universalIds.length > 0) {
+      orConditions.push({ universalUID: { in: uniq(universalIds) } });
+    }
+
+    const users = await prismaTx.user.findMany({
+      where: { OR: orConditions },
+      select: { id: true, universalUID: true },
+    });
+
+    const foundIds = new Set(users.map((user) => user.id));
+    const foundUniversalIds = new Set(users.map((user) => user.universalUID));
+
+    for (const userId of userIds) {
+      if (isUuid(userId)) {
+        if (!foundIds.has(userId)) {
+          throw new BadRequestException(
+            `Array of user IDs contains ${userId} which is not a known user ID`,
+          );
+        }
+      } else if (!foundUniversalIds.has(userId)) {
+        throw new BadRequestException(
+          `Array of user IDs contains ${userId} which is not a known user ID`,
+        );
+      }
+    }
+  }
+
   /**
    * Bulk create group with members.
    * @param authUser auth user
@@ -431,12 +481,36 @@ export class GroupService {
     );
 
     const memberResults: BulkCreateGroupMemberResultDto[] = [];
+    const userIds = dto.userIds ?? [];
     const createdBy = authUser.userId ? authUser.userId : '00000000';
     const createdAt = new Date().toISOString();
+    const isAdmin = checkIsAdmin(authUser);
+    const parentGroupId = dto.parentGroupId;
 
     try {
       const group = await this.prisma.$transaction(async (tx) => {
+        let parentGroup: { id: string } | null = null;
+
+        if (parentGroupId) {
+          parentGroup = await tx.group.findFirst({
+            where: {
+              id: parentGroupId,
+              status: isAdmin ? undefined : GroupStatus.ACTIVE,
+            },
+            select: {
+              id: true,
+            },
+          });
+
+          if (!parentGroup) {
+            throw new BadRequestException(
+              `Parent group id ${parentGroupId} does not match an existing group.`,
+            );
+          }
+        }
+
         await checkGroupName(dto.name, '', tx);
+        await this.assertUserIdsExist(tx, userIds);
 
         const groupData = {
           name: dto.name,
@@ -455,10 +529,31 @@ export class GroupService {
 
         const createdGroup = await tx.group.create({ data: groupData });
 
-        for (let index = 0; index < dto.userIds.length; index += 1) {
-          const userId = dto.userIds[index];
+        if (parentGroup) {
+          await tx.groupMembership.create({
+            data: {
+              groupId: parentGroup.id,
+              memberId: createdGroup.id,
+              membershipType: MemberShipType.GROUP,
+              createdBy,
+            },
+          });
+
+          await tx.group.update({
+            where: {
+              id: parentGroup.id,
+            },
+            data: {
+              subGroups: {
+                connect: { id: createdGroup.id },
+              },
+            },
+          });
+        }
+
+        for (let index = 0; index < userIds.length; index += 1) {
+          const userId = userIds[index];
           try {
-            await ensureUserExists(tx, userId, authUser);
             await tx.groupMembership.create({
               data: {
                 groupId: createdGroup.id,
@@ -482,7 +577,7 @@ export class GroupService {
               success: false,
               error: failureMessage,
             });
-            for (const remainingId of dto.userIds.slice(index + 1)) {
+            for (const remainingId of userIds.slice(index + 1)) {
               memberResults.push({
                 userId: remainingId,
                 success: false,

@@ -1,6 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-  ArrayNotEmpty,
   IsArray,
   IsBoolean,
   IsEnum,
@@ -132,6 +131,9 @@ export class BulkCreateGroupDto {
     description: 'group name',
     type: 'string',
   })
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
   @IsString()
   @IsNotEmpty()
   @Length(3, 150)
@@ -142,13 +144,15 @@ export class BulkCreateGroupDto {
     description: 'group description',
     type: 'string',
   })
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
   @IsString()
   @IsNotEmpty()
   @Length(3, 2048)
-  @IsOptional()
-  description?: string | null;
+  description: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     name: 'userIds',
     description: 'user ids',
     type: [String],
@@ -160,11 +164,21 @@ export class BulkCreateGroupDto {
         )
       : value,
   )
+  @IsOptional()
   @IsArray()
-  @ArrayNotEmpty()
   @IsString({ each: true })
   @IsNotEmpty({ each: true })
-  userIds: string[];
+  userIds?: string[];
+
+  @ApiPropertyOptional({
+    name: 'parentGroupId',
+    description: 'parent group id',
+    type: 'string',
+  })
+  @IsString()
+  @IsNotEmpty()
+  @IsOptional()
+  parentGroupId?: string;
 
   @ApiProperty({
     name: 'privateGroup',

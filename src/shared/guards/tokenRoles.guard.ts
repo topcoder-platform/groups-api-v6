@@ -16,6 +16,10 @@ export const Roles = (...roles: UserRole[]) => SetMetadata(ROLES_KEY, roles);
 
 @Injectable()
 export class TokenRolesGuard implements CanActivate {
+  private static readonly ROLE_ALIASES: Record<string, string> = {
+    'project manager': 'manager',
+  };
+
   constructor(
     private reflector: Reflector,
     private jwtService: JwtService,
@@ -48,9 +52,14 @@ export class TokenRolesGuard implements CanActivate {
       request['user'] = user;
 
       // Check role-based access for regular users
-      if (user.roles && requiredRoles.length > 0) {
-        const hasRole = requiredRoles.some((role) =>
-          user.roles ? user.roles.includes(role) : false,
+      if (requiredRoles.length > 0) {
+        const normalizedRequiredRoles = requiredRoles
+          .map((role) => this.normalizeRole(role))
+          .filter((role) => role.length > 0);
+        const normalizedUserRoles = this.normalizeRoles(user.roles);
+
+        const hasRole = normalizedRequiredRoles.some((role) =>
+          normalizedUserRoles.includes(role),
         );
         if (hasRole) {
           return true;
@@ -90,5 +99,35 @@ export class TokenRolesGuard implements CanActivate {
       }
       throw new UnauthorizedException('Invalid token');
     }
+  }
+
+  private normalizeRole(role: unknown): string {
+    if (typeof role !== 'string') {
+      return '';
+    }
+
+    const normalized = role.trim().toLowerCase();
+    if (normalized.length === 0) {
+      return '';
+    }
+
+    return TokenRolesGuard.ROLE_ALIASES[normalized] ?? normalized;
+  }
+
+  private normalizeRoles(roles: unknown): string[] {
+    if (!Array.isArray(roles)) {
+      return [];
+    }
+
+    const normalizedRoles = new Set<string>();
+
+    for (const role of roles) {
+      const normalized = this.normalizeRole(role);
+      if (normalized) {
+        normalizedRoles.add(normalized);
+      }
+    }
+
+    return Array.from(normalizedRoles);
   }
 }

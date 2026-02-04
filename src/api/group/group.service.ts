@@ -9,7 +9,6 @@ import { Prisma } from '@prisma/client';
 import { pick, uniq } from 'lodash';
 import { HttpService } from '@nestjs/axios';
 import { lastValueFrom } from 'rxjs';
-import { validate as isUuid } from 'uuid';
 import {
   CreateGroupDto,
   BulkCreateGroupDto,
@@ -415,56 +414,6 @@ export class GroupService {
     });
   }
 
-  private async assertUserIdsExist(
-    prismaTx: PrismaService | Prisma.TransactionClient,
-    userIds: string[],
-  ) {
-    if (userIds.length === 0) {
-      return;
-    }
-
-    const uuidIds: string[] = [];
-    const universalIds: string[] = [];
-
-    for (const userId of userIds) {
-      if (isUuid(userId)) {
-        uuidIds.push(userId);
-      } else {
-        universalIds.push(userId);
-      }
-    }
-
-    const orConditions: Prisma.UserWhereInput[] = [];
-    if (uuidIds.length > 0) {
-      orConditions.push({ id: { in: uniq(uuidIds) } });
-    }
-    if (universalIds.length > 0) {
-      orConditions.push({ universalUID: { in: uniq(universalIds) } });
-    }
-
-    const users = await prismaTx.user.findMany({
-      where: { OR: orConditions },
-      select: { id: true, universalUID: true },
-    });
-
-    const foundIds = new Set(users.map((user) => user.id));
-    const foundUniversalIds = new Set(users.map((user) => user.universalUID));
-
-    for (const userId of userIds) {
-      if (isUuid(userId)) {
-        if (!foundIds.has(userId)) {
-          throw new BadRequestException(
-            `Array of user IDs contains ${userId} which is not a known user ID`,
-          );
-        }
-      } else if (!foundUniversalIds.has(userId)) {
-        throw new BadRequestException(
-          `Array of user IDs contains ${userId} which is not a known user ID`,
-        );
-      }
-    }
-  }
-
   /**
    * Bulk create group with members.
    * @param authUser auth user
@@ -510,7 +459,6 @@ export class GroupService {
         }
 
         await checkGroupName(dto.name, '', tx);
-        await this.assertUserIdsExist(tx, userIds);
 
         const groupData = {
           name: dto.name,

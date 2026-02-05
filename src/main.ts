@@ -66,14 +66,16 @@ async function bootstrap() {
     methods: 'GET, POST, OPTIONS, PUT, DELETE, PATCH',
     origin: (requestOrigin, callback) => {
       if (!requestOrigin) {
-        return callback(null, false);
+        callback(null, false);
+        return;
       }
 
       if (isAllowedOrigin(requestOrigin)) {
-        return callback(null, requestOrigin);
+        callback(null, requestOrigin);
+        return;
       }
 
-      return callback(null, false);
+      callback(null, false);
     },
   };
   app.use(cors(corsConfig));

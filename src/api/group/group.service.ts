@@ -5,11 +5,15 @@ import {
   NotFoundException,
   NotAcceptableException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { pick, uniq } from 'lodash';
 import { HttpService } from '@nestjs/axios';
 import { lastValueFrom } from 'rxjs';
 import {
   CreateGroupDto,
+  BulkCreateGroupDto,
+  BulkCreateGroupResponseDto,
+  BulkCreateGroupMemberResultDto,
   GroupCriteria,
   GetGroupCriteria,
   GroupResponseDto,
@@ -20,6 +24,7 @@ import {
 import { PaginatedResponse } from 'src/dto/pagination.dto';
 import { CommonConfig } from 'src/shared/config/common.config';
 import { GroupStatus } from 'src/shared/enums/groupStatus.enum';
+import { MemberShipType } from 'src/shared/enums/memberShipType.enum';
 import {
   JwtUser,
   isAdmin as checkIsAdmin,
@@ -226,11 +231,11 @@ export class GroupService {
       parseCommaSeparatedString(criteria.fields, ALLOWED_FIELD_NAMES) ||
       ALLOWED_FIELD_NAMES;
 
-    const buildPrismaFilter = (whereClause: Record<string, string>) => {
-      const prismaFilter: any = {
-        where: {
-          ...whereClause,
-        },
+    const buildPrismaFilter = (
+      whereClause: Prisma.GroupWhereInput,
+    ): Prisma.GroupFindFirstArgs => {
+      const prismaFilter: Prisma.GroupFindFirstArgs = {
+        where: whereClause,
       };
 
       if (
@@ -238,14 +243,14 @@ export class GroupService {
         criteria.includeParentGroup ||
         criteria.flattenGroupIdTree
       ) {
-        prismaFilter.include = {};
+        const include: Prisma.GroupInclude = {};
 
         if (criteria.includeSubGroups || criteria.flattenGroupIdTree) {
           if (criteria.oneLevel) {
-            prismaFilter.include.subGroups = true;
+            include.subGroups = true;
           } else {
             // max 3 level subGroups
-            prismaFilter.include.subGroups = {
+            include.subGroups = {
               include: {
                 subGroups: {
                   include: {
@@ -259,10 +264,10 @@ export class GroupService {
 
         if (criteria.includeParentGroup) {
           if (criteria.oneLevel) {
-            prismaFilter.include.parentGroups = true;
+            include.parentGroups = true;
           } else {
             // max 3 level parentGroups
-            prismaFilter.include.parentGroups = {
+            include.parentGroups = {
               include: {
                 parentGroups: {
                   include: {
@@ -273,6 +278,8 @@ export class GroupService {
             };
           }
         }
+
+        prismaFilter.include = include;
       }
 
       return prismaFilter;
@@ -297,8 +304,10 @@ export class GroupService {
     let entity;
     let resolvedGroupId: string | undefined;
     for (const lookup of lookupOrder) {
-      const prismaFilter = buildPrismaFilter({ [lookup.field]: lookup.value });
-      // eslint-disable-next-line no-await-in-loop
+      const prismaFilter = buildPrismaFilter(
+        lookup.field === 'id' ? { id: lookup.value } : { oldId: lookup.value },
+      );
+
       entity = await this.prisma.group.findFirst(prismaFilter);
       if (entity) {
         resolvedGroupId = entity.id;
@@ -308,7 +317,9 @@ export class GroupService {
 
     if (!entity) {
       const identifier = oldId ?? groupId ?? '';
-      throw new NotFoundException(`Not group found with id or oldId: ${identifier}`);
+      throw new NotFoundException(
+        `Not group found with id or oldId: ${identifier}`,
+      );
     }
 
     const groupIdentifier = resolvedGroupId ?? entity.id;
@@ -324,7 +335,7 @@ export class GroupService {
 
     if (criteria.flattenGroupIdTree) {
       const groupIdTree: string[] = [];
-      const groupEntity = entity as any;
+      const groupEntity = entity;
       // max 3 level subGroups
       if (groupEntity.subGroups) {
         groupEntity.subGroups.forEach((subGroupL1: any) => {
@@ -401,6 +412,152 @@ export class GroupService {
 
       return result as GroupResponseDto;
     });
+  }
+
+  /**
+   * Bulk create group with members.
+   * @param authUser auth user
+   * @param dto dto
+   * @returns response
+   */
+  async bulkCreateGroup(
+    authUser: JwtUser,
+    dto: BulkCreateGroupDto,
+  ): Promise<BulkCreateGroupResponseDto> {
+    this.logger.debug(
+      //eslint-disable-next-line @typescript-eslint/no-base-to-string, @typescript-eslint/restrict-template-expressions
+      `Bulk Create Group - user - ${authUser} , data -  ${JSON.stringify(dto)}`,
+    );
+
+    const memberResults: BulkCreateGroupMemberResultDto[] = [];
+    const userIds = dto.userIds ?? [];
+    const createdBy = authUser.userId ? authUser.userId : '00000000';
+    const createdAt = new Date().toISOString();
+    const isAdmin = checkIsAdmin(authUser);
+    const parentGroupId = dto.parentGroupId;
+
+    try {
+      const group = await this.prisma.$transaction(async (tx) => {
+        let parentGroup: { id: string } | null = null;
+
+        if (parentGroupId) {
+          parentGroup = await tx.group.findFirst({
+            where: {
+              id: parentGroupId,
+              status: isAdmin ? undefined : GroupStatus.ACTIVE,
+            },
+            select: {
+              id: true,
+            },
+          });
+
+          if (!parentGroup) {
+            throw new BadRequestException(
+              `Parent group id ${parentGroupId} does not match an existing group.`,
+            );
+          }
+        }
+
+        await checkGroupName(dto.name, '', tx);
+
+        const groupData = {
+          name: dto.name,
+          description: dto.description,
+          privateGroup: dto.privateGroup,
+          selfRegister: dto.selfRegister,
+          domain: dto.domain || '',
+          ssoId: dto.ssoId || '',
+          organizationId: dto.organizationId || '',
+          status: GroupStatus.ACTIVE,
+          createdBy,
+          createdAt,
+          updatedBy: createdBy,
+          updatedAt: createdAt,
+        };
+
+        const createdGroup = await tx.group.create({ data: groupData });
+
+        if (parentGroup) {
+          await tx.groupMembership.create({
+            data: {
+              groupId: parentGroup.id,
+              memberId: createdGroup.id,
+              membershipType: MemberShipType.GROUP,
+              createdBy,
+            },
+          });
+
+          await tx.group.update({
+            where: {
+              id: parentGroup.id,
+            },
+            data: {
+              subGroups: {
+                connect: { id: createdGroup.id },
+              },
+            },
+          });
+        }
+
+        for (let index = 0; index < userIds.length; index += 1) {
+          const userId = userIds[index];
+          try {
+            await tx.groupMembership.create({
+              data: {
+                groupId: createdGroup.id,
+                memberId: userId,
+                membershipType: MemberShipType.USER,
+                createdBy,
+              },
+            });
+            memberResults.push({ userId, success: true });
+          } catch (error) {
+            const failureMessage =
+              error instanceof Error ? error.message : 'Unknown error';
+
+            for (const result of memberResults) {
+              result.success = false;
+              result.error = 'Rolled back due to previous failure';
+            }
+
+            memberResults.push({
+              userId,
+              success: false,
+              error: failureMessage,
+            });
+            for (const remainingId of userIds.slice(index + 1)) {
+              memberResults.push({
+                userId: remainingId,
+                success: false,
+                error: 'Not processed due to previous failure',
+              });
+            }
+            throw new BadRequestException({
+              message: 'Bulk create group failed.',
+              memberResults,
+            });
+          }
+        }
+
+        return createdGroup;
+      });
+
+      const response: BulkCreateGroupResponseDto = {
+        ...group,
+        status: group.status as GroupStatus,
+        memberResults,
+      };
+
+      await postBusEvent(CommonConfig.KAFKA_GROUP_BULK_CREATE_TOPIC, response);
+
+      return response;
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+
+      throw error;
+    }
   }
 
   /**

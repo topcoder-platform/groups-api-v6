@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  IsArray,
   IsBoolean,
   IsEnum,
   IsIn,
@@ -124,6 +125,110 @@ export class PatchGroupDto {
   oldId: string;
 }
 
+export class BulkCreateGroupDto {
+  @ApiProperty({
+    name: 'name',
+    description: 'group name',
+    type: 'string',
+  })
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
+  @IsString()
+  @IsNotEmpty()
+  @Length(3, 150)
+  name: string;
+
+  @ApiProperty({
+    name: 'description',
+    description: 'group description',
+    type: 'string',
+  })
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
+  @IsString()
+  @IsNotEmpty()
+  @Length(3, 2048)
+  description: string;
+
+  @ApiPropertyOptional({
+    name: 'userIds',
+    description: 'user ids',
+    type: [String],
+  })
+  @Transform(({ value }: { value: unknown }) =>
+    Array.isArray(value)
+      ? (value as unknown[]).map((item) =>
+          typeof item === 'number' ? String(item) : item,
+        )
+      : value,
+  )
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  @IsNotEmpty({ each: true })
+  userIds?: string[];
+
+  @ApiPropertyOptional({
+    name: 'parentGroupId',
+    description: 'parent group id',
+    type: 'string',
+  })
+  @IsString()
+  @IsNotEmpty()
+  @IsOptional()
+  parentGroupId?: string;
+
+  @ApiProperty({
+    name: 'privateGroup',
+    description: 'the flag whether group is private',
+    type: 'boolean',
+  })
+  @Transform(({ value }) => transformBoolean(value))
+  @IsBoolean()
+  privateGroup: boolean;
+
+  @ApiProperty({
+    name: 'selfRegister',
+    description: 'the flag whether group is self register',
+    type: 'boolean',
+  })
+  @Transform(({ value }) => transformBoolean(value))
+  @IsBoolean()
+  selfRegister: boolean;
+
+  @ApiProperty({
+    name: 'organizationId',
+    description: 'group organization id',
+    type: 'string',
+  })
+  @IsString()
+  @IsNotEmpty()
+  @IsOptional()
+  organizationId?: string;
+
+  @ApiProperty({
+    name: 'domain',
+    description: 'group domain',
+    type: 'string',
+  })
+  @IsString()
+  @IsNotEmpty()
+  @IsOptional()
+  domain?: string;
+
+  @ApiProperty({
+    name: 'ssoId',
+    description: 'group sso id',
+    type: 'string',
+  })
+  @IsString()
+  @IsNotEmpty()
+  @IsOptional()
+  ssoId?: string;
+}
+
 export class GroupResponseDto extends UpdateGroupDto {
   @ApiProperty({
     name: 'id',
@@ -159,6 +264,38 @@ export class GroupResponseDto extends UpdateGroupDto {
     type: Date,
   })
   updatedAt: Date;
+}
+
+export class BulkCreateGroupMemberResultDto {
+  @ApiProperty({
+    name: 'userId',
+    description: 'user id',
+    type: 'string',
+  })
+  userId: string;
+
+  @ApiProperty({
+    name: 'success',
+    description: 'success flag',
+    type: 'boolean',
+  })
+  success: boolean;
+
+  @ApiPropertyOptional({
+    name: 'error',
+    description: 'error message',
+    type: 'string',
+  })
+  error?: string;
+}
+
+export class BulkCreateGroupResponseDto extends GroupResponseDto {
+  @ApiProperty({
+    name: 'memberResults',
+    description: 'member create results',
+    type: [BulkCreateGroupMemberResultDto],
+  })
+  memberResults: BulkCreateGroupMemberResultDto[];
 }
 
 export class GroupWithSubAndParentResponseDto extends GroupResponseDto {

@@ -12,6 +12,7 @@ import { AuthConfig } from '../../config/auth.config';
 export interface JwtUser {
   userId?: string;
   handle?: string;
+  groupIds?: string[];
   roles?: UserRole[];
   scopes?: string[];
   isMachine: boolean;
@@ -139,6 +140,14 @@ export class JwtService implements OnModuleInit {
           }
         }
       }
+
+      const groupIds = this.extractGroupIds(
+        decodedToken as Record<string, unknown>,
+      );
+      if (groupIds.length > 0) {
+        user.groupIds = groupIds;
+      }
+
       return user;
     } catch (error) {
       console.error('Token validation failed:', error);
@@ -212,5 +221,40 @@ export class JwtService implements OnModuleInit {
     }
 
     return Array.from(expandedScopes);
+  }
+
+  /**
+   * Extracts caller group identifiers from known token claim keys.
+   * @param decodedToken The decoded JWT payload.
+   * @returns A deduplicated list of string group identifiers.
+   */
+  private extractGroupIds(decodedToken: Record<string, unknown>): string[] {
+    const groupIds = new Set<string>();
+
+    for (const key of Object.keys(decodedToken)) {
+      const lowerKey = key.toLowerCase();
+      const isGroupClaim =
+        lowerKey === 'groups' ||
+        lowerKey.endsWith('/groups') ||
+        lowerKey.endsWith('groups') ||
+        lowerKey.endsWith('groupids');
+
+      if (!isGroupClaim) {
+        continue;
+      }
+
+      const claimValue = decodedToken[key];
+      if (!Array.isArray(claimValue)) {
+        continue;
+      }
+
+      for (const value of claimValue) {
+        if (typeof value === 'string' && value.trim().length > 0) {
+          groupIds.add(value);
+        }
+      }
+    }
+
+    return Array.from(groupIds);
   }
 }

@@ -82,3 +82,35 @@ model User {
 
   @@index([universalUID])
 }
+
+model CommunityMetadata {
+  id                   String    @id @default(uuid())
+  communityId          String    @unique
+  communityName        String
+  description          String?
+  image                String?
+  subdomains           String[]
+  groupIds             String[]
+  authorizedGroupIds   String[]
+  terms                Int[]
+  hidden               Boolean   @default(false)
+  hideSearch           Boolean   @default(false)
+  hideFilter           Boolean   @default(false)
+  chevronOverAvatar    Boolean   @default(false)
+  footerText           String?
+  leaderboardApiUrl    String?
+  newsFeed             String?
+  challengeFilter      Json?
+  challengeListing     Json?
+  metadata             Json?
+  menuItems            Json
+  logos                Json
+  additionalLogos      String[]
+  accessDeniedPage     Json?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@index([communityId])
+  @@index([hidden])
+  @@index([subdomains])
+}

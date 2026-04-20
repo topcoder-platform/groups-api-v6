@@ -112,7 +112,7 @@ export async function ensureGroupMember(
 ) {
   const memberCheckRes = await prisma.groupMembership.findFirst({
     where: {
-      id: userId,
+      memberId: userId,
       groupId: groupId,
       membershipType: MemberShipType.USER,
     },

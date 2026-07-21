@@ -79,12 +79,13 @@ export class JwtService {
 
       const user: JwtUser = { isMachine: false };
 
-      // Check for M2M token from Auth0
-      if (decodedToken.scope) {
-        const scopeString = decodedToken.scope as string;
-        const rawScopes = scopeString.split(' ');
+      // Match the shared v6 authenticator's client-credentials classification.
+      if (this.isMachineTokenPayload(decodedToken)) {
+        const rawScopes = this.extractScopes(decodedToken);
         user.scopes = this.expandScopes(rawScopes);
-        user.userId = decodedToken.sub;
+        if (typeof decodedToken.sub === 'string') {
+          user.userId = decodedToken.sub;
+        }
         user.isMachine = true;
       } else {
         // Check for roles, userId and handle in a user token
@@ -118,9 +119,9 @@ export class JwtService {
   /**
    * Verifies a token with the standard v6 auth configuration.
    *
-   * RS256 tokens use the allowlisted issuer's JWKS endpoint and must match the
-   * configured Auth0 audience. Legacy HS256 user tokens use AUTH_SECRET; their
-   * audience is checked when the token contains an audience claim.
+   * RS256 tokens use the allowlisted issuer's JWKS endpoint. Legacy HS256
+   * tokens use AUTH_SECRET. Both token types validate issuer and expiration;
+   * genuine client-credentials tokens must also match AUTH0_AUDIENCE.
    *
    * @param token The encoded JWT.
    * @returns The verified token payload.
@@ -156,6 +157,10 @@ export class JwtService {
       ignoreExpiration: AuthConfig.jwt.ignoreExpiration,
     };
 
+    if (this.isClientCredentialsGrant(tokenPayload)) {
+      verifyOptions.audience = this.getConfiguredAudience();
+    }
+
     let signingKey: Secret;
     let algorithms: Algorithm[];
 
@@ -166,18 +171,11 @@ export class JwtService {
 
       signingKey = AuthConfig.authSecret;
       algorithms = ['HS256'];
-
-      // Legacy Topcoder user/admin tokens do not contain an audience. If an
-      // HS256 token does contain one, validate it against the global value.
-      if (Object.prototype.hasOwnProperty.call(tokenPayload, 'aud')) {
-        verifyOptions.audience = this.getConfiguredAudience();
-      }
     } else if (decodedToken.header.alg === 'RS256') {
       if (!decodedToken.header.kid) {
         throw new UnauthorizedException('Invalid token: Missing key ID');
       }
 
-      verifyOptions.audience = this.getConfiguredAudience();
       signingKey = await this.getSigningKey(issuer, decodedToken.header.kid);
       algorithms = ['RS256'];
     } else {
@@ -209,6 +207,87 @@ export class JwtService {
     }
 
     return audience;
+  }
+
+  /**
+   * Determines whether a payload represents a shared v6 M2M token.
+   *
+   * User tokens can also contain OAuth scopes, so scopes alone are not a
+   * machine-token marker. This mirrors tc-core's client-credentials check by
+   * requiring scopes and the grant type while excluding user IDs and roles.
+   *
+   * @param payload The decoded JWT payload.
+   * @returns Whether the payload should be authorized as an M2M caller.
+   */
+  private isMachineTokenPayload(payload: Record<string, unknown>): boolean {
+    const hasUserId = this.findClaim(payload, 'userId') !== undefined;
+    const roles = this.findClaim(payload, 'roles');
+    const hasRoles = roles !== undefined;
+
+    return (
+      this.isClientCredentialsGrant(payload) &&
+      this.extractScopes(payload).length > 0 &&
+      !hasUserId &&
+      !hasRoles
+    );
+  }
+
+  /**
+   * Determines whether a payload was issued through client credentials.
+   *
+   * This intentionally controls audience validation independently from M2M
+   * authorization so an unusual client token cannot bypass AUTH0_AUDIENCE by
+   * carrying user-like claims.
+   *
+   * @param payload The decoded JWT payload.
+   * @returns Whether the grant type is client credentials.
+   */
+  private isClientCredentialsGrant(payload: Record<string, unknown>): boolean {
+    return this.findClaim(payload, 'gty') === 'client-credentials';
+  }
+
+  /**
+   * Extracts OAuth scopes from standard or namespaced JWT claims.
+   *
+   * @param payload The decoded JWT payload.
+   * @returns A deduplicated list of non-empty scopes.
+   */
+  private extractScopes(payload: Record<string, unknown>): string[] {
+    const scopeClaim =
+      this.findClaim(payload, 'scope') ?? this.findClaim(payload, 'scopes');
+    const rawScopes = Array.isArray(scopeClaim)
+      ? scopeClaim
+      : typeof scopeClaim === 'string'
+        ? scopeClaim.split(/\s+/)
+        : [];
+
+    return Array.from(
+      new Set(
+        rawScopes
+          .filter((scope): scope is string => typeof scope === 'string')
+          .map((scope) => scope.trim())
+          .filter((scope) => scope.length > 0),
+      ),
+    );
+  }
+
+  /**
+   * Finds either a standard claim or its namespaced equivalent.
+   *
+   * @param payload The decoded JWT payload.
+   * @param claimName The unqualified claim name.
+   * @returns The claim value when present.
+   */
+  private findClaim(
+    payload: Record<string, unknown>,
+    claimName: string,
+  ): unknown {
+    const key = Object.keys(payload).find(
+      (candidate) =>
+        candidate === claimName || candidate.endsWith(`/${claimName}`),
+    );
+
+    return key ? payload[key] : undefined;
   }
 
   /**

@@ -49,7 +49,7 @@ export function loadAuthConfig(env: NodeJS.ProcessEnv = process.env) {
     validIssuers: parseValidIssuers(env.VALID_ISSUERS),
 
     jwt: {
-      // Global Auth0 audience used to validate audience-bearing tokens.
+      // Global Auth0 audience used to validate client-credentials tokens.
       audience: env.AUTH0_AUDIENCE,
 
       // Clock tolerance for token expiration time (in seconds).

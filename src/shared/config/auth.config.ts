@@ -1,19 +1,64 @@
 /**
- * Authentication-related configuration
+ * Parses the global valid-issuer setting.
+ *
+ * The shared Topcoder value is a JSON array. Comma-separated values are also
+ * accepted for compatibility with newer v6 services and local configuration.
+ *
+ * @param value The VALID_ISSUERS environment value.
+ * @returns A deduplicated list of non-empty issuer URLs.
  */
-export const AuthConfig = {
-  // Used for validating JSON Web Tokens
-  jwt: {
-    // The Auth0 issuer used to validate tokens
-    issuer: process.env.AUTH0_ISSUER || 'https://topcoder-dev.auth0.com/',
+export function parseValidIssuers(value: string | undefined): string[] {
+  if (!value || value.trim().length === 0) {
+    return [];
+  }
 
-    // The audience(s) that are valid for the token
-    audience: process.env.TOKEN_AUDIENCE || 'https://m2m.topcoder-dev.com/',
+  let issuers: unknown;
 
-    // Clock tolerance for token expiration time (in seconds)
-    clockTolerance: 30,
+  try {
+    issuers = JSON.parse(value.replace(/\\"/g, '"')) as unknown;
+  } catch {
+    issuers = value.split(',');
+  }
 
-    // Whether to enforce token expiration
-    ignoreExpiration: process.env.NODE_ENV !== 'production',
-  },
-};
+  if (!Array.isArray(issuers)) {
+    return [];
+  }
+
+  return Array.from(
+    new Set(
+      issuers
+        .filter((issuer): issuer is string => typeof issuer === 'string')
+        .map((issuer) => issuer.trim())
+        .filter((issuer) => issuer.length > 0),
+    ),
+  );
+}
+
+/**
+ * Loads authentication settings from the standard v6 environment variables.
+ *
+ * @param env Environment values to load.
+ * @returns Authentication settings used by JWT validation.
+ */
+export function loadAuthConfig(env: NodeJS.ProcessEnv = process.env) {
+  return {
+    // Shared secret used to validate legacy HS256 Topcoder user tokens.
+    authSecret: env.AUTH_SECRET,
+
+    // Global JSON array (or comma-separated list) of accepted token issuers.
+    validIssuers: parseValidIssuers(env.VALID_ISSUERS),
+
+    jwt: {
+      // Global Auth0 audience used to validate client-credentials tokens.
+      audience: env.AUTH0_AUDIENCE,
+
+      // Clock tolerance for token expiration time (in seconds).
+      clockTolerance: 30,
+
+      // Token expiration is enforced in every environment.
+      ignoreExpiration: false,
+    },
+  };
+}
+
+export const AuthConfig = loadAuthConfig();

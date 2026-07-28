@@ -2,6 +2,8 @@
 
 Group API built on modern frameworks for managing all group-related Topcoder needs.
 
+Use Node.js 26.5.0 and pnpm 11.15.1. Run `nvm use` in this project before running pnpm commands.
+
 ## Project setup
 
 ```bash
@@ -30,12 +32,12 @@ docker run -p 5432:5432  -e POSTGRES_PASSWORD=mysecretpassword postgres:14
 export DATABASE_URL="postgresql://postgres:mysecretpassword@localhost:5432/group-api?schema=groups"
 
 # run migration
-npx prisma migrate dev
+pnpm exec prisma migrate dev
 
 # seed data
-npx prisma db seed
+pnpm exec prisma db seed
 or
-npx prisma migrate reset
+pnpm exec prisma migrate reset
 
 # if you modify prisma schema, run migration again
 # and it'll ask
@@ -54,8 +56,8 @@ npx prisma migrate reset
 - update the postgres database url in .env file —
   `DATABASE_URL="postgresql://postgres:mysecretpassword@localhost:5432/group-api?schema=groups"`
 - install dependencies `pnpm install`
-- run the prisma migration `npx prisma migrate dev`
-- run the prisma seed `npx prisma db seed`
+- run the prisma migration `pnpm exec prisma migrate dev`
+- run the prisma seed `pnpm exec prisma db seed`
 - run the project `pnpm run start`
 
 

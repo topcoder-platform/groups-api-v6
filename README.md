@@ -2,7 +2,11 @@
 
 Group API built on modern frameworks for managing all group-related Topcoder needs.
 
-Use Node.js 26.5.0 and pnpm 11.15.1. Run `nvm use` in this project before running pnpm commands.
+Use Node.js 26.5.1 and pnpm 11.15.1. Run `nvm use` in this project before running pnpm commands.
+
+The production image runs as the unprivileged `app` user. Its Alpine 3.24
+runtime installs Node.js 26.5.1 and the patched system OpenSSL 3.5.8 packages;
+the Node.js build toolchain and npm are not copied into the runtime image.
 
 ## Project setup
 
@@ -73,15 +77,11 @@ pnpm exec prisma migrate reset
 curl --request POST \
   --url https://auth0proxy.topcoder-dev.com/token \
   --header 'content-type: application/json' \
-  --data '{"auth0_url": "https://topcoder-dev.auth0.com/oauth/token", "client_id":"8uHVTW2WHp8BbBPX7J0YTAwgYbYTfjsM","client_secret":"hQXGeKO-cSZ15CLBNRDGZAGRcHWay6PAR_zTQQz4YjdX7QNU7NwGoaa3YuuUYvUv","audience":"https://m2m.topcoder-dev.com/","grant_type":"client_credentials"}'
+  --data '{"auth0_url": "https://topcoder-dev.auth0.com/oauth/token", "client_id":"YOUR_CLIENT_ID","client_secret":"YOUR_CLIENT_SECRET","audience":"https://m2m.topcoder-dev.com/","grant_type":"client_credentials"}'
 ```
 
-For a read-only scope M2M token, use:
-
-```
-"client_id":"dgrh9mkk8N6sWsVPFf6JqdVmjjuibowf"
-"client_secret":"_6jFqIppsA3u87Tm7mRDXhX_yf8-DC2ooc5f0affjuWoRiLG1ZriHtUsMQgo61qp"
-```
+Obtain M2M credentials with the required scope from the approved secret store;
+never commit client credentials to this repository.
 
 - then you can use Postman to test all apis
 - Swagger docs are accessible at `http://localhost:3000/api-docs`

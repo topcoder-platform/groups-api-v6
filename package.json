@@ -40,7 +40,7 @@
     "qs": "^6.15.3",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "tc-core-library-js": "topcoder-platform/tc-core-library-js.git#master",
+    "tc-core-library-js": "github:topcoder-platform/tc-core-library-js#c262f4aca971904f308085bdeaaed35cdf3cfa7d",
     "tc-bus-api-wrapper": "github:topcoder-platform/tc-bus-api-wrapper.git",
     "uuid": "^14.0.1"
   },

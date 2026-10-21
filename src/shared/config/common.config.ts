@@ -3,13 +3,14 @@ export const CommonConfig = {
     process.env.CHALLENGE_API_URL ?? 'http://localhost:4000/challenges/',
 
   BUSAPI_URL: process.env.BUSAPI_URL ?? 'http://localhost:4000/eventBus',
-  AUTH0_URL: process.env.AUTH0_URL ?? 'http://localhost:4000/oauth/token',
-  AUTH0_AUDIENCE: process.env.AUTH0_AUDIENCE ?? 'http://localhost:4000',
-  AUTH0_CLIENT_ID: process.env.AUTH0_CLIENT_ID ?? '',
-  AUTH0_CLIENT_SECRET: process.env.AUTH0_CLIENT_SECRET ?? '',
+  // Legacy wrapper option names carry only this workload's Keycloak settings.
+  AUTH0_URL: process.env.KEYCLOAK_TOKEN_URL,
+  AUTH0_AUDIENCE: process.env.KEYCLOAK_AUDIENCE,
+  AUTH0_CLIENT_ID: process.env.KEYCLOAK_CLIENT_ID,
+  AUTH0_CLIENT_SECRET: process.env.KEYCLOAK_CLIENT_SECRET,
   TOKEN_CACHE_TIME: process.env.TOKEN_CACHE_TIME ?? 86400000,
   AUTH0_PROXY_SERVER_URL:
-    process.env.AUTH0_PROXY_SERVER_URL ?? 'http://localhost:4000/oauth/token',
+    process.env.KEYCLOAK_TOKEN_URL,
 
   KAFKA_ERROR_TOPIC: process.env.KAFKA_ERROR_TOPIC ?? 'common.error.reporting',
   KAFKA_GROUP_CREATE_TOPIC:

@@ -7,6 +7,7 @@ import {
   SetMetadata,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { auth } from 'tc-core-library-js';
 import { JwtService } from '../modules/global/jwt.service';
 import { SCOPES_KEY } from '../decorators/scopes.decorator';
 import { UserRole } from '../enums/userRole.enum';
@@ -14,6 +15,7 @@ import { UserRole } from '../enums/userRole.enum';
 export const ROLES_KEY = 'roles';
 export const Roles = (...roles: UserRole[]) => SetMetadata(ROLES_KEY, roles);
 
+/** Authorizes verified members by role or services by explicit Groups scope policy. */
 @Injectable()
 export class TokenRolesGuard implements CanActivate {
   private static readonly ROLE_ALIASES: Record<string, string> = {
@@ -25,6 +27,7 @@ export class TokenRolesGuard implements CanActivate {
     private jwtService: JwtService,
   ) {}
 
+  /** Return route authorization for the current request; throws UnauthorizedException or ForbiddenException on denial. */
   async canActivate(context: ExecutionContext): Promise<boolean> {
     // Get required roles and scopes from decorators
     const requiredRoles =
@@ -68,9 +71,7 @@ export class TokenRolesGuard implements CanActivate {
 
       // Check scope-based access for M2M tokens
       if (user.scopes && requiredScopes.length > 0) {
-        const hasScope = requiredScopes.some((scope) =>
-          user.scopes ? user.scopes.includes(scope) : false,
-        );
+        const hasScope = auth.hasScopes(user.principal, requiredScopes, 'any');
         if (hasScope) {
           return true;
         }

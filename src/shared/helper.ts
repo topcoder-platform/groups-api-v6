@@ -329,8 +329,8 @@ export function parseCommaSeparatedString(s, allowedValues) {
 }
 
 /**
- * Get Bus API Client
- * @return {Object} Bus API Client Instance
+ * Get the cached Bus client using the workload Keycloak credentials through the legacy wrapper option names.
+ * Takes no parameters; returns the client or throws on invalid core configuration.
  */
 function getBusApiClient() {
   // if there is no bus API client instance, then create a new instance

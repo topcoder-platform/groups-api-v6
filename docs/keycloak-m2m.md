@@ -4,6 +4,15 @@ This code is isolated on `keycloak_m2M`. Do not deploy this branch until the
 workload and its callers are ready. Existing DEV services continue using Auth0.
 The core dependency is pinned to a reviewed Keycloak prerelease commit, including
 transitive wrapper uses through the pnpm override. No npm latest dependency is used.
+Both the dependency and the override use the `codeload.github.com` tarball URL, the
+same form as the other v6 services. The earlier `github:` override form did not apply
+to `tc-bus-api-wrapper`'s nested copy, which stayed on Auth0 core 3.0.1, so bus
+publishing would have failed. `pnpm-lock.yaml` now resolves a single 4.0.0-keycloak.0.
+
+`CHALLENGE_API_URL` is the Challenge API base, for example
+`https://api.topcoder-dev.com/v6/challenges`. Group deletion appends `?groups=[...]` to
+it. In DEV it is `/config/groups-api-v6/appvar/CHALLENGE_API_URL`. The older
+`CHALLENGE_API` parameter is not read by this service.
 
 Required settings are `M2M_PROVIDER=keycloak`, `KEYCLOAK_ISSUER`,
 `KEYCLOAK_AUDIENCE`, and `KEYCLOAK_TOKEN_URL`; issuing workloads additionally need

@@ -24,7 +24,10 @@ it. In DEV it is `/config/groups-api-v6/appvar/CHALLENGE_API_URL`. The older
 before the migration:
 
 - `M2MService` (challenge lookups) uses `M2M_AUTH_URL`, `M2M_AUTH_AUDIENCE`,
-  `M2M_AUTH_PROXY_SEREVR_URL`, `M2M_AUTH_CLIENT_ID` and `M2M_AUTH_CLIENT_SECRET`.
+  `M2M_AUTH_PROXY_SEREVR_URL`, `M2M_AUTH_CLIENT_ID` and `M2M_AUTH_CLIENT_SECRET`, each
+  falling back to the Bus client's `AUTH0_*` value. DEV SSM defines only the `AUTH0_*`
+  names, so before this fallback the Auth0 path had no credentials and group deletion
+  failed.
 - The Bus client uses `AUTH0_URL`, `AUTH0_AUDIENCE`, `AUTH0_PROXY_SERVER_URL`,
   `AUTH0_CLIENT_ID` and `AUTH0_CLIENT_SECRET`.
 

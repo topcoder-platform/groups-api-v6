@@ -65,6 +65,20 @@ describe('USE_KEYCLOAK provider selection', () => {
     expect(CommonConfig.AUTH0_CLIENT_SECRET).toBe('keycloak-secret');
   });
 
+  it('falls back to the AUTH0_* settings when M2M_AUTH_* are not set', () => {
+    for (const name of Object.keys(auth0Env).filter((key) => key.startsWith('M2M_AUTH_'))) {
+      delete (auth0Env as Record<string, string>)[name];
+    }
+    const { m2m } = load({ USE_KEYCLOAK: 'false' });
+    expect(m2m).toHaveBeenCalledWith({
+      AUTH0_URL: auth0Env.AUTH0_URL,
+      AUTH0_AUDIENCE: auth0Env.AUTH0_AUDIENCE,
+      AUTH0_PROXY_SERVER_URL: auth0Env.AUTH0_PROXY_SERVER_URL,
+      AUTH0_CLIENT_ID: 'auth0-bus',
+      AUTH0_CLIENT_SECRET: 'auth0-bus-secret',
+    });
+  });
+
   it('defaults to Auth0 when USE_KEYCLOAK is unset', () => {
     delete saved.USE_KEYCLOAK;
     const { CommonConfig } = load({});

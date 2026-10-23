@@ -7,8 +7,8 @@ transitive wrapper uses through the pnpm override. No npm latest dependency is u
 Both the dependency and the override use the `codeload.github.com` tarball URL, the
 same form as the other v6 services. The earlier `github:` override form did not apply
 to `tc-bus-api-wrapper`'s nested copy, which stayed on Auth0 core 3.0.1, so bus
-publishing would have failed. `pnpm-lock.yaml` resolves a single 4.0.0-keycloak.1
-(core commit `e844764`).
+publishing would have failed. `pnpm-lock.yaml` resolves a single 4.0.0-keycloak.2
+(core commit `112d54a`).
 
 `CHALLENGE_API_URL` is the Challenge API base, for example
 `https://api.topcoder-dev.com/v6/challenges`. Group deletion appends `?groups=[...]` to

@@ -7,28 +7,51 @@ transitive wrapper uses through the pnpm override. No npm latest dependency is u
 Both the dependency and the override use the `codeload.github.com` tarball URL, the
 same form as the other v6 services. The earlier `github:` override form did not apply
 to `tc-bus-api-wrapper`'s nested copy, which stayed on Auth0 core 3.0.1, so bus
-publishing would have failed. `pnpm-lock.yaml` now resolves a single 4.0.0-keycloak.0.
+publishing would have failed. `pnpm-lock.yaml` resolves a single 4.0.0-keycloak.1
+(core commit `e844764`).
 
 `CHALLENGE_API_URL` is the Challenge API base, for example
 `https://api.topcoder-dev.com/v6/challenges`. Group deletion appends `?groups=[...]` to
 it. In DEV it is `/config/groups-api-v6/appvar/CHALLENGE_API_URL`. The older
 `CHALLENGE_API` parameter is not read by this service.
 
-Required settings are `M2M_PROVIDER=keycloak`, `KEYCLOAK_ISSUER`,
-`KEYCLOAK_AUDIENCE`, and `KEYCLOAK_TOKEN_URL`; issuing workloads additionally need
-`KEYCLOAK_CLIENT_ID` and `KEYCLOAK_CLIENT_SECRET` from their own encrypted secret
-references. Optional `KEYCLOAK_SCOPE` narrows the client's approved defaults.
+## Provider switch: `USE_KEYCLOAK`
+
+`USE_KEYCLOAK=true` makes this service get its M2M tokens from Keycloak, using
+`KEYCLOAK_TOKEN_URL`, `KEYCLOAK_AUDIENCE`, `KEYCLOAK_CLIENT_ID` and
+`KEYCLOAK_CLIENT_SECRET` (optional `KEYCLOAK_SCOPE` narrows the client's defaults).
+`KEYCLOAK_ISSUER` is also required. Unset or `false` restores the Auth0 behaviour from
+before the migration:
+
+- `M2MService` (challenge lookups) uses `M2M_AUTH_URL`, `M2M_AUTH_AUDIENCE`,
+  `M2M_AUTH_PROXY_SEREVR_URL`, `M2M_AUTH_CLIENT_ID` and `M2M_AUTH_CLIENT_SECRET`.
+- The Bus client uses `AUTH0_URL`, `AUTH0_AUDIENCE`, `AUTH0_PROXY_SERVER_URL`,
+  `AUTH0_CLIENT_ID` and `AUTH0_CLIENT_SECRET`.
+
+`tc-core-library-js` reads the flag (`auth.useKeycloak`), and `CommonConfig` gets the
+Bus settings from `auth.wrapperSettings`, so the service and the core always agree.
+Any value other than `true`/`false` fails at startup. In DEV the flag is
+`/config/common/global-appvar/USE_KEYCLOAK`.
+
+Incoming machine tokens: with `true`, Keycloak tokens are accepted, plus Auth0 tokens
+while `LEGACY_M2M_ISSUERS`/`LEGACY_M2M_AUDIENCE` are set. With `false`, Auth0 tokens
+are accepted through `LEGACY_M2M_*`, plus Keycloak tokens while `KEYCLOAK_ISSUER` and
+`KEYCLOAK_AUDIENCE` are set, so callers that have not switched yet keep working.
+
+**Rollback:** set `USE_KEYCLOAK=false` and force a new deployment so tasks re-read SSM.
+No code or dependency change is needed. Keep the Auth0 settings above in SSM until
+Keycloak has been accepted.
+
 The DEV issuer is `https://keycloak.topcoder-dev.com/realms/topcoder-m2m-dev`,
 audience `https://api.topcoder-dev.com`, and managed endpoint
-`https://keycloak.topcoder-dev.com/m2m/token`. Wait for the managed endpoint's
-recorded deployment acceptance before enabling this configuration.
+`https://keycloak.topcoder-dev.com/m2m/token`.
 
 Member sessions remain Auth0. Keep `VALID_ISSUERS` and `AUTH_SECRET` where legacy
 member HMAC tokens are supported. Set `AUTH_USER_AUDIENCES` to a JSON array, or
 explicitly retain existing user-token audience behavior with
 `ALLOW_LEGACY_USER_AUDIENCE=true`. Never apply that exception to M2M tokens.
-During an approved overlap, `LEGACY_M2M_ISSUERS` and `LEGACY_M2M_AUDIENCE` allow
-old Auth0 machine tokens to pass the same normalizer. Issuance remains Keycloak-only.
+`LEGACY_M2M_ISSUERS` and `LEGACY_M2M_AUDIENCE` let Auth0 machine tokens pass the same
+normalizer (see the provider switch above).
 
 `tc-core-library-js` owns signature, issuer, audience, lifetime, and machine/user
 classification. Service adapters must use its verified `kind`, `isMachine`, and
@@ -40,9 +63,9 @@ grants machine access. No permissive fallback or synthetic token path is availab
 Before rollout run this project's `nvm use`, `pnpm lint`, `pnpm build`, and targeted
 authentication tests. Validate real authorized/unauthorized routes with both a
 Keycloak service token and a member token, including wrong audiences and insufficient
-scopes. Switch only after every downstream receiver accepts the issuer. Rollback
-requires the prior application/dependency and credentials with equivalent grants;
-never automatically retry issuance against Auth0.
+scopes. Switch only after every downstream receiver accepts the issuer. The core never
+retries a failed Keycloak request against Auth0; rolling back is the explicit
+`USE_KEYCLOAK=false` change above.
 
 Adapter policy checks cover verified machine identity, scope separation from members,
 and sanitized validation failures. Groups retains its explicit singular/plural and

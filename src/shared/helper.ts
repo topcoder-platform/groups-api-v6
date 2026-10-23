@@ -329,7 +329,7 @@ export function parseCommaSeparatedString(s, allowedValues) {
 }
 
 /**
- * Get the cached Bus client using the workload Keycloak credentials through the legacy wrapper option names.
+ * Get the cached Bus client. Its AUTH0_* options hold the Keycloak or Auth0 settings chosen by USE_KEYCLOAK (see CommonConfig).
  * Takes no parameters; returns the client or throws on invalid core configuration.
  */
 function getBusApiClient() {

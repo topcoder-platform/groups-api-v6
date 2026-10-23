@@ -1,16 +1,21 @@
+import { auth } from 'tc-core-library-js';
+
 export const CommonConfig = {
   CHALLENGE_API_URL:
     process.env.CHALLENGE_API_URL ?? 'http://localhost:4000/challenges/',
 
   BUSAPI_URL: process.env.BUSAPI_URL ?? 'http://localhost:4000/eventBus',
-  // Legacy wrapper option names carry only this workload's Keycloak settings.
-  AUTH0_URL: process.env.KEYCLOAK_TOKEN_URL,
-  AUTH0_AUDIENCE: process.env.KEYCLOAK_AUDIENCE,
-  AUTH0_CLIENT_ID: process.env.KEYCLOAK_CLIENT_ID,
-  AUTH0_CLIENT_SECRET: process.env.KEYCLOAK_CLIENT_SECRET,
+  // tc-bus-api-wrapper option names. USE_KEYCLOAK=true fills them from KEYCLOAK_*;
+  // otherwise they keep the Auth0 values and defaults below.
+  ...auth.wrapperSettings({
+    AUTH0_URL: process.env.AUTH0_URL ?? 'http://localhost:4000/oauth/token',
+    AUTH0_AUDIENCE: process.env.AUTH0_AUDIENCE ?? 'http://localhost:4000',
+    AUTH0_CLIENT_ID: process.env.AUTH0_CLIENT_ID ?? '',
+    AUTH0_CLIENT_SECRET: process.env.AUTH0_CLIENT_SECRET ?? '',
+    AUTH0_PROXY_SERVER_URL:
+      process.env.AUTH0_PROXY_SERVER_URL ?? 'http://localhost:4000/oauth/token',
+  }),
   TOKEN_CACHE_TIME: process.env.TOKEN_CACHE_TIME ?? 86400000,
-  AUTH0_PROXY_SERVER_URL:
-    process.env.KEYCLOAK_TOKEN_URL,
 
   KAFKA_ERROR_TOPIC: process.env.KAFKA_ERROR_TOPIC ?? 'common.error.reporting',
   KAFKA_GROUP_CREATE_TOPIC:

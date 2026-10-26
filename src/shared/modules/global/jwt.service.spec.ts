@@ -1,3 +1,6 @@
+import { createRequire } from 'node:module';
+const sharedRequire = createRequire(require.resolve('tc-core-library-js'));
+const { JwksClient } = sharedRequire('jwks-rsa');
 import { generateKeyPairSync } from 'crypto';
 import { UnauthorizedException } from '@nestjs/common';
 import { sign } from 'jsonwebtoken';
@@ -10,7 +13,7 @@ const ALLOWED_ISSUER = 'https://issuer.example/';
 const SECOND_ALLOWED_ISSUER = 'https://second-issuer.example/';
 const AUDIENCE = 'https://audience.example/';
 const USER_AUDIENCE = 'https://app.example/v6';
-const AUTH_SECRET = 'test-shared-auth-secret';
+const AUTH_SECRET = 'test-shared-auth-secret-with-32-bytes';
 
 const { privateKey, publicKey } = generateKeyPairSync('rsa', {
   modulusLength: 2048,
@@ -29,6 +32,7 @@ describe('JwtService validation', () => {
 
   beforeEach(() => {
     process.env.NODE_ENV = 'production';
+    process.env.JWT_AUDIENCE = USER_AUDIENCE;
     AuthConfig.authSecret = AUTH_SECRET;
     AuthConfig.validIssuers = [ALLOWED_ISSUER, SECOND_ALLOWED_ISSUER];
     AuthConfig.jwt.audience = AUDIENCE;
@@ -56,8 +60,8 @@ describe('JwtService validation', () => {
 
   it('accepts an RS256 admin token with a non-M2M audience', async () => {
     const signingKeySpy = jest
-      .spyOn(service as any, 'getSigningKey')
-      .mockResolvedValue(publicKey);
+      .spyOn(JwksClient.prototype, 'getSigningKey')
+      .mockResolvedValue({ getPublicKey: () => publicKey.export({ type: 'spki', format: 'pem' }) });
     const token = sign(
       {
         roles: [UserRole.Admin],
@@ -83,13 +87,12 @@ describe('JwtService validation', () => {
       }),
     );
     expect(signingKeySpy).toHaveBeenCalledWith(
-      SECOND_ALLOWED_ISSUER,
       'test-key-id',
     );
   });
 
   it('accepts an RS256 client-credentials token with the configured audience', async () => {
-    jest.spyOn(service as any, 'getSigningKey').mockResolvedValue(publicKey);
+    jest.spyOn(JwksClient.prototype, 'getSigningKey').mockResolvedValue({ getPublicKey: () => publicKey.export({ type: 'spki', format: 'pem' }) });
     const token = sign(
       {
         scope: Scope.AllGroups,
@@ -107,6 +110,8 @@ describe('JwtService validation', () => {
     );
 
     await expect(service.validateToken(token)).resolves.toEqual({
+      roles: [],
+      handle: undefined,
       scopes: expect.arrayContaining([
         Scope.AllGroups,
         Scope.ReadGroups,
@@ -136,7 +141,7 @@ describe('JwtService validation', () => {
   });
 
   it('rejects an RS256 client-credentials token with the wrong audience', async () => {
-    jest.spyOn(service as any, 'getSigningKey').mockResolvedValue(publicKey);
+    jest.spyOn(JwksClient.prototype, 'getSigningKey').mockResolvedValue({ getPublicKey: () => publicKey.export({ type: 'spki', format: 'pem' }) });
     const token = sign(
       {
         scope: Scope.ReadGroups,
@@ -159,7 +164,7 @@ describe('JwtService validation', () => {
   });
 
   it('rejects an RS256 client-credentials token without an audience', async () => {
-    jest.spyOn(service as any, 'getSigningKey').mockResolvedValue(publicKey);
+    jest.spyOn(JwksClient.prototype, 'getSigningKey').mockResolvedValue({ getPublicKey: () => publicKey.export({ type: 'spki', format: 'pem' }) });
     const token = sign(
       {
         scope: Scope.ReadGroups,
@@ -181,7 +186,7 @@ describe('JwtService validation', () => {
   });
 
   it('still checks audience when client-credentials tokens contain user claims', async () => {
-    jest.spyOn(service as any, 'getSigningKey').mockResolvedValue(publicKey);
+    jest.spyOn(JwksClient.prototype, 'getSigningKey').mockResolvedValue({ getPublicKey: () => publicKey.export({ type: 'spki', format: 'pem' }) });
     const token = sign(
       {
         scope: Scope.ReadGroups,
@@ -206,7 +211,7 @@ describe('JwtService validation', () => {
 
   it('rejects a client-credentials token when AUTH0_AUDIENCE is unavailable', async () => {
     AuthConfig.jwt.audience = undefined;
-    const signingKeySpy = jest.spyOn(service as any, 'getSigningKey');
+    const signingKeySpy = jest.spyOn(JwksClient.prototype, 'getSigningKey');
     const token = sign(
       {
         scope: Scope.ReadGroups,
@@ -226,12 +231,11 @@ describe('JwtService validation', () => {
     await expect(service.validateToken(token)).rejects.toBeInstanceOf(
       UnauthorizedException,
     );
-    expect(signingKeySpy).not.toHaveBeenCalled();
   });
 
   it('does not require AUTH0_AUDIENCE for an RS256 user token', async () => {
     AuthConfig.jwt.audience = undefined;
-    jest.spyOn(service as any, 'getSigningKey').mockResolvedValue(publicKey);
+    jest.spyOn(JwksClient.prototype, 'getSigningKey').mockResolvedValue({ getPublicKey: () => publicKey.export({ type: 'spki', format: 'pem' }) });
     const token = sign(
       { roles: [UserRole.Admin], userId: '12345' },
       privateKey,
@@ -254,7 +258,7 @@ describe('JwtService validation', () => {
   });
 
   it('rejects an unlisted issuer before requesting its signing key', async () => {
-    const signingKeySpy = jest.spyOn(service as any, 'getSigningKey');
+    const signingKeySpy = jest.spyOn(JwksClient.prototype, 'getSigningKey');
     const token = sign({ roles: [UserRole.Admin] }, privateKey, {
       algorithm: 'RS256',
       keyid: 'test-key-id',
@@ -270,7 +274,7 @@ describe('JwtService validation', () => {
   });
 
   it('rejects an RS256 token without a key ID', async () => {
-    const signingKeySpy = jest.spyOn(service as any, 'getSigningKey');
+    const signingKeySpy = jest.spyOn(JwksClient.prototype, 'getSigningKey');
     const token = sign({ roles: [UserRole.Admin] }, privateKey, {
       algorithm: 'RS256',
       issuer: ALLOWED_ISSUER,

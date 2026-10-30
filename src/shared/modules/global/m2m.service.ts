@@ -15,7 +15,7 @@ export class M2MService {
     const config = M2mConfig.auth0;
     // this.logger.debug(`=============M2MService===== ${config} `);
 
-    this.m2m = core.auth.m2m({
+    this.m2m = core.createM2MClient({
       AUTH0_URL: config.url,
       AUTH0_AUDIENCE: config.audience,
       AUTH0_PROXY_SERVER_URL: config.proxyUrl,

@@ -5,6 +5,8 @@ ARG PNPM_VERSION=11.15.1
 
 FROM node:${NODE_VERSION}-alpine3.24 AS build
 
+ARG PNPM_VERSION
+
 RUN apk upgrade --no-cache \
     && apk add --no-cache bash
 
@@ -24,12 +26,13 @@ ARG OPENSSL_VERSION=3.5.8-r0
 
 # Use Alpine's dynamically linked Node.js package so the runtime receives the
 # patched system OpenSSL libraries without carrying npm or Node.js headers.
+# Keep minimum patched versions while allowing Alpine repository updates.
 RUN apk upgrade --no-cache \
     && apk add --no-cache \
         bash \
-        "libcrypto3=${OPENSSL_VERSION}" \
-        "libssl3=${OPENSSL_VERSION}" \
-        "nodejs-current=${ALPINE_NODE_VERSION}" \
+        "libcrypto3>=${OPENSSL_VERSION}" \
+        "libssl3>=${OPENSSL_VERSION}" \
+        "nodejs-current>=${ALPINE_NODE_VERSION}" \
     && addgroup -S -g 10001 app \
     && adduser -S -D -H -h /app -u 10001 -G app app
 

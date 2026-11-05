@@ -32,7 +32,7 @@ app.post('/eventBus/bus/events', (req, res) => {
   res.json({})
 })
 
-const m2mToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3RvcGNvZGVyLWRldi5hdXRoMC5jb20vIiwic3ViIjoiakdJZjJwZDNmNDRCMWpxdk9haTMwQklLVFphbllCZlVAY2xpZW50cyIsImF1ZCI6Imh0dHBzOi8vbTJtLnRvcGNvZGVyLWRldi5jb20vIiwiaWF0IjoxNzQ4MDk5NDk4LCJleHAiOjE4NDgxODU4OTgsInNjb3BlIjoid3JpdGU6YnVzX2FwaSxhbGw6Y2hhbGxlbmdlcyIsImd0eSI6ImNsaWVudC1jcmVkZW50aWFscyIsImF6cCI6ImpHSWYycGQzZjQ0QjFqcXZPYWkzMEJJS1RaYW5ZQmZVIn0.h3ksdsdJm5USGF1VgROrpkTtStmCzv5ZA6y8bd8AnGY';
+const m2mToken = 'MOCK_M2M_TOKEN';
 
 const m2mScope = 'write:bus_api,all:groups';
 
@@ -111,4 +111,3 @@ app.get('/challenges', (req, res) => {
 app.listen(app.get('port'), '0.0.0.0', () => {
   logger.info(`Express server listening on port ${app.get('port')}`)
 })
-

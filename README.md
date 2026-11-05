@@ -2,7 +2,12 @@
 
 Group API built on modern frameworks for managing all group-related Topcoder needs.
 
-Use Node.js 26.5.0 and pnpm 11.15.1. Run `nvm use` in this project before running pnpm commands.
+Use Node.js 26.5.1 and pnpm 11.15.1. Run `nvm use` in this project before running pnpm commands.
+
+The production image runs as the unprivileged `app` user. Its Alpine 3.24
+runtime installs Node.js >=26.5.1 and system OpenSSL >=3.5.8 from the Alpine
+repositories, allowing package updates while retaining the minimum patched
+versions. The Node.js build toolchain and npm are not copied into the runtime image.
 
 ## Project setup
 
@@ -73,15 +78,11 @@ pnpm exec prisma migrate reset
 curl --request POST \
   --url https://auth0proxy.topcoder-dev.com/token \
   --header 'content-type: application/json' \
-  --data '{"auth0_url": "https://topcoder-dev.auth0.com/oauth/token", "client_id":"8uHVTW2WHp8BbBPX7J0YTAwgYbYTfjsM","client_secret":"hQXGeKO-cSZ15CLBNRDGZAGRcHWay6PAR_zTQQz4YjdX7QNU7NwGoaa3YuuUYvUv","audience":"https://m2m.topcoder-dev.com/","grant_type":"client_credentials"}'
+  --data '{"auth0_url": "https://topcoder-dev.auth0.com/oauth/token", "client_id":"YOUR_CLIENT_ID","client_secret":"YOUR_CLIENT_SECRET","audience":"https://m2m.topcoder-dev.com/","grant_type":"client_credentials"}'
 ```
 
-For a read-only scope M2M token, use:
-
-```
-"client_id":"dgrh9mkk8N6sWsVPFf6JqdVmjjuibowf"
-"client_secret":"_6jFqIppsA3u87Tm7mRDXhX_yf8-DC2ooc5f0affjuWoRiLG1ZriHtUsMQgo61qp"
-```
+Obtain M2M credentials with the required scope from the approved secret store;
+never commit client credentials to this repository.
 
 - then you can use Postman to test all apis
 - Swagger docs are accessible at `http://localhost:3000/api-docs`
@@ -116,3 +117,26 @@ For a read-only scope M2M token, use:
 - API base configuration points to v6 in dev/local and v5 in prod (for backward compatibility):
   - Dev: work-manager/config/constants/development.js.
   - Local: work-manager/config/constants/local.js and work-manager/config/constants/local.js.
+
+## Shared authentication and bus client (v6 refresh)
+
+This branch uses `tc-core-library-js` **4.0.0-rc.1**. Use its named
+`createJwtVerifier` / `createJwtAuthenticator`, `createM2MClient`, and
+`createBusApiClient` exports for shared authentication and bus API publishing.
+Service-specific roles, scopes, sessions and ownership checks remain in this service.
+The former bus wrapper dependency and local JWT cryptography must not be reintroduced.
+
+RSA verification requires an exact configured issuer and audience (`JWT_AUDIENCE`
+for client tokens, `AUTH0_AUDIENCE` for machine/API tokens, or this service's explicit
+issuer-policy settings). HMAC secrets must be at least 32 bytes; no default secret
+is supplied. Expiry is enforced. Machine identity comes from the shared verifier,
+not the presence of scopes. Supply real development credentials through the service's
+existing environment configuration before deployment.
+
+Bus publishers use `createBusApiClient(config).postEvent(event)` with the existing
+event envelope and optional key. Configure `BUSAPI_URL` for v6 and the existing
+OAuth credentials/token provider. The client uses bounded HTTPS requests and does
+not retry POSTs automatically. Application retry/outbox behavior remains local.
+
+See the [core migration guide](https://github.com/topcoder-platform/tc-core-library-js/blob/v4.0.0-rc.1/MIGRATION.md)
+for the API mapping, compatibility requirements, and rollout scope.

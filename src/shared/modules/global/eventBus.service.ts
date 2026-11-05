@@ -1,5 +1,5 @@
+import { createBusApiClient } from 'tc-core-library-js';
 import {
-  HttpStatus,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -7,7 +7,6 @@ import {
 import { M2MService } from './m2m.service';
 import { CommonConfig } from 'src/shared/config/common.config';
 import { HttpService } from '@nestjs/axios';
-import { firstValueFrom } from 'rxjs';
 
 /**
  * Event bus message.
@@ -46,12 +45,11 @@ export class EventBusService {
   ) {}
 
   /**
-   * Send email message to Event bus.
+   * Send email through the shared tc-core-library-js bus publisher.
    * @param payload send email payload
    */
   async sendEmail(payload: EventBusSendEmailPayload): Promise<void> {
     // Get M2m token
-    const token = await this.m2mService.getM2MToken();
     // build event bus message
     const msg = new EventBusMessage<EventBusSendEmailPayload>();
     msg.topic = 'external.action.email';
@@ -61,22 +59,10 @@ export class EventBusService {
     // send message to event bus
     const url = CommonConfig.BUSAPI_URL;
     try {
-      const response = await firstValueFrom(
-        this.httpService.post(url, msg, {
-          headers: {
-            Authorization: 'Bearer ' + token,
-          },
-        }),
-      );
-
-      /* eslint-disable @typescript-eslint/no-unsafe-enum-comparison */
-      if (
-        response.status !== HttpStatus.OK &&
-        response.status !== HttpStatus.NO_CONTENT
-      ) {
-        throw new Error(`Event bus status code: ${response.status}`);
-      }
-      /* eslint-enable @typescript-eslint/no-unsafe-enum-comparison */
+      await createBusApiClient({
+        BUSAPI_URL: url,
+        getToken: () => this.m2mService.getM2MToken(),
+      }).postEvent(msg);
     } catch (e) {
       this.logger.error(`Event bus failed with error: ${e.message}`);
       throw new InternalServerErrorException(

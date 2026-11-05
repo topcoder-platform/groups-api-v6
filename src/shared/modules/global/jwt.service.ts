@@ -1,6 +1,5 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { Algorithm, decode, verify, VerifyOptions, Secret } from 'jsonwebtoken';
-import * as jwksClient from 'jwks-rsa';
+import { createJwtVerifier, type JwtVerifier } from 'tc-core-library-js';
 import { ALL_SCOPE_MAPPINGS, Scope } from '../../enums/scopes.enum';
 import { UserRole } from '../../enums/userRole.enum';
 import { AuthConfig } from '../../config/auth.config';
@@ -43,7 +42,7 @@ const SCOPE_SYNONYMS: Record<string, string[]> = {
 
 @Injectable()
 export class JwtService {
-  private readonly jwksClients = new Map<string, jwksClient.JwksClient>();
+  private verifier?: JwtVerifier;
 
   /**
    * Validates and extracts user information from a JWT token
@@ -61,7 +60,7 @@ export class JwtService {
       if (allowStaticTestTokens && TEST_M2M_TOKENS[token]) {
         const rawScopes = TEST_M2M_TOKENS[token];
         const scopes = this.expandScopes(rawScopes);
-        return { scopes, isMachine: false };
+        return { scopes, isMachine: true };
       }
 
       let decodedToken: any;
@@ -79,28 +78,12 @@ export class JwtService {
 
       const user: JwtUser = { isMachine: false };
 
-      // Match the shared v6 authenticator's client-credentials classification.
-      if (this.isMachineTokenPayload(decodedToken)) {
-        const rawScopes = this.extractScopes(decodedToken);
-        user.scopes = this.expandScopes(rawScopes);
-        if (typeof decodedToken.sub === 'string') {
-          user.userId = decodedToken.sub;
-        }
-        user.isMachine = true;
-      } else {
-        // Check for roles, userId and handle in a user token
-        for (const key of Object.keys(decodedToken)) {
-          if (key.endsWith('handle')) {
-            user.handle = decodedToken[key] as string;
-          }
-          if (key.endsWith('userId')) {
-            user.userId = decodedToken[key] as string;
-          }
-          if (key.endsWith('roles')) {
-            user.roles = decodedToken[key] as UserRole[];
-          }
-        }
-      }
+      user.isMachine = decodedToken.isMachine === true;
+      user.scopes = this.expandScopes(decodedToken.scopes);
+      const id = decodedToken.userId ?? decodedToken.sub;
+      user.userId = id === undefined ? undefined : String(id);
+      user.handle = decodedToken.handle;
+      user.roles = decodedToken.roles as UserRole[];
 
       const groupIds = this.extractGroupIds(
         decodedToken as Record<string, unknown>,
@@ -129,214 +112,14 @@ export class JwtService {
   private async verifySignedToken(
     token: string,
   ): Promise<Record<string, unknown>> {
-    const decodedToken = decode(token, { complete: true });
-
-    if (
-      !decodedToken ||
-      typeof decodedToken.payload === 'string' ||
-      !decodedToken.payload
-    ) {
-      throw new UnauthorizedException('Invalid token');
-    }
-
-    const tokenPayload = decodedToken.payload as Record<string, unknown>;
-    const issuer = tokenPayload.iss;
-    const validIssuers = AuthConfig.validIssuers;
-
-    if (
-      typeof issuer !== 'string' ||
-      validIssuers.length === 0 ||
-      !validIssuers.includes(issuer)
-    ) {
-      throw new UnauthorizedException('Invalid token issuer');
-    }
-
-    const verifyOptions: VerifyOptions = {
-      issuer: validIssuers as [string, ...string[]],
+    this.verifier ??= createJwtVerifier({
+      VALID_ISSUERS: AuthConfig.validIssuers,
+      AUTH_SECRET: AuthConfig.authSecret,
+      AUTH0_AUDIENCE: AuthConfig.jwt.audience,
+      JWT_AUDIENCE: process.env.JWT_AUDIENCE,
       clockTolerance: AuthConfig.jwt.clockTolerance,
-      ignoreExpiration: AuthConfig.jwt.ignoreExpiration,
-    };
-
-    if (this.isClientCredentialsGrant(tokenPayload)) {
-      verifyOptions.audience = this.getConfiguredAudience();
-    }
-
-    let signingKey: Secret;
-    let algorithms: Algorithm[];
-
-    if (decodedToken.header.alg === 'HS256') {
-      if (!AuthConfig.authSecret) {
-        throw new UnauthorizedException('Invalid token signing key');
-      }
-
-      signingKey = AuthConfig.authSecret;
-      algorithms = ['HS256'];
-    } else if (decodedToken.header.alg === 'RS256') {
-      if (!decodedToken.header.kid) {
-        throw new UnauthorizedException('Invalid token: Missing key ID');
-      }
-
-      signingKey = await this.getSigningKey(issuer, decodedToken.header.kid);
-      algorithms = ['RS256'];
-    } else {
-      throw new UnauthorizedException('Invalid token algorithm');
-    }
-
-    const verifiedToken = verify(token, signingKey, {
-      ...verifyOptions,
-      algorithms,
     });
-
-    if (typeof verifiedToken === 'string') {
-      throw new UnauthorizedException('Invalid token');
-    }
-
-    return verifiedToken as Record<string, unknown>;
-  }
-
-  /**
-   * Gets the configured audience or fails closed when it is unavailable.
-   *
-   * @returns The AUTH0_AUDIENCE value.
-   */
-  private getConfiguredAudience(): string {
-    const audience = AuthConfig.jwt.audience?.trim();
-
-    if (!audience) {
-      throw new UnauthorizedException('Invalid token audience configuration');
-    }
-
-    return audience;
-  }
-
-  /**
-   * Determines whether a payload represents a shared v6 M2M token.
-   *
-   * User tokens can also contain OAuth scopes, so scopes alone are not a
-   * machine-token marker. This mirrors tc-core's client-credentials check by
-   * requiring scopes and the grant type while excluding user IDs and roles.
-   *
-   * @param payload The decoded JWT payload.
-   * @returns Whether the payload should be authorized as an M2M caller.
-   */
-  private isMachineTokenPayload(payload: Record<string, unknown>): boolean {
-    const hasUserId = this.findClaim(payload, 'userId') !== undefined;
-    const roles = this.findClaim(payload, 'roles');
-    const hasRoles = roles !== undefined;
-
-    return (
-      this.isClientCredentialsGrant(payload) &&
-      this.extractScopes(payload).length > 0 &&
-      !hasUserId &&
-      !hasRoles
-    );
-  }
-
-  /**
-   * Determines whether a payload was issued through client credentials.
-   *
-   * This intentionally controls audience validation independently from M2M
-   * authorization so an unusual client token cannot bypass AUTH0_AUDIENCE by
-   * carrying user-like claims.
-   *
-   * @param payload The decoded JWT payload.
-   * @returns Whether the grant type is client credentials.
-   */
-  private isClientCredentialsGrant(payload: Record<string, unknown>): boolean {
-    return this.findClaim(payload, 'gty') === 'client-credentials';
-  }
-
-  /**
-   * Extracts OAuth scopes from standard or namespaced JWT claims.
-   *
-   * @param payload The decoded JWT payload.
-   * @returns A deduplicated list of non-empty scopes.
-   */
-  private extractScopes(payload: Record<string, unknown>): string[] {
-    const scopeClaim =
-      this.findClaim(payload, 'scope') ?? this.findClaim(payload, 'scopes');
-    const rawScopes = Array.isArray(scopeClaim)
-      ? scopeClaim
-      : typeof scopeClaim === 'string'
-        ? scopeClaim.split(/\s+/)
-        : [];
-
-    return Array.from(
-      new Set(
-        rawScopes
-          .filter((scope): scope is string => typeof scope === 'string')
-          .map((scope) => scope.trim())
-          .filter((scope) => scope.length > 0),
-      ),
-    );
-  }
-
-  /**
-   * Finds either a standard claim or its namespaced equivalent.
-   *
-   * @param payload The decoded JWT payload.
-   * @param claimName The unqualified claim name.
-   * @returns The claim value when present.
-   */
-  private findClaim(
-    payload: Record<string, unknown>,
-    claimName: string,
-  ): unknown {
-    const key = Object.keys(payload).find(
-      (candidate) =>
-        candidate === claimName || candidate.endsWith(`/${claimName}`),
-    );
-
-    return key ? payload[key] : undefined;
-  }
-
-  /**
-   * Gets the signing key from an allowlisted issuer.
-   *
-   * A separate cached JWKS client is used for each configured issuer.
-   *
-   * @param issuer The validated issuer from the token.
-   * @param kid The Key ID from the JWT header
-   * @returns A Promise that resolves to the signing key
-   */
-  private getSigningKey(issuer: string, kid: string): Promise<Secret> {
-    const normalizedIssuer = issuer.replace(/\/$/, '');
-    let client = this.jwksClients.get(normalizedIssuer);
-
-    if (!client) {
-      client = jwksClient({
-        jwksUri: `${normalizedIssuer}/.well-known/jwks.json`,
-        cache: true,
-        rateLimit: true,
-      });
-      this.jwksClients.set(normalizedIssuer, client);
-    }
-
-    return new Promise((resolve, reject) => {
-      client.getSigningKey(kid, (err, key) => {
-        if (err || !key) {
-          console.error('Error getting signing key:', err);
-          return reject(
-            new UnauthorizedException(
-              'Invalid token: Unable to get signing key',
-            ),
-          );
-        }
-
-        // Get the public key using the proper method
-        const signingKey = key.getPublicKey();
-
-        if (!signingKey) {
-          return reject(
-            new UnauthorizedException(
-              'Invalid token: Unable to get public key',
-            ),
-          );
-        }
-
-        resolve(signingKey);
-      });
-    });
+    return this.verifier.verify(token);
   }
 
   /**

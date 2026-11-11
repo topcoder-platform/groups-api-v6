@@ -66,6 +66,7 @@ describe('JwtService validation', () => {
       });
     const token = sign(
       {
+        emailVerified: true,
         roles: [UserRole.Admin],
         userId: '12345',
         scope: 'openid profile offline_access',
@@ -197,6 +198,7 @@ describe('JwtService validation', () => {
     });
     const token = sign(
       {
+        emailVerified: true,
         scope: Scope.ReadGroups,
         gty: 'client-credentials',
         roles: [UserRole.Admin],
@@ -249,7 +251,7 @@ describe('JwtService validation', () => {
       getPublicKey: () => publicKey.export({ type: 'spki', format: 'pem' }),
     });
     const token = sign(
-      { roles: [UserRole.Admin], userId: '12345' },
+      { emailVerified: true, roles: [UserRole.Admin], userId: '12345' },
       privateKey,
       {
         algorithm: 'RS256',
@@ -271,13 +273,17 @@ describe('JwtService validation', () => {
 
   it('rejects an unlisted issuer before requesting its signing key', async () => {
     const signingKeySpy = jest.spyOn(JwksClient.prototype, 'getSigningKey');
-    const token = sign({ roles: [UserRole.Admin] }, privateKey, {
-      algorithm: 'RS256',
-      keyid: 'test-key-id',
-      issuer: 'https://unlisted-issuer.example/',
-      audience: AUDIENCE,
-      expiresIn: 300,
-    });
+    const token = sign(
+      { emailVerified: true, roles: [UserRole.Admin] },
+      privateKey,
+      {
+        algorithm: 'RS256',
+        keyid: 'test-key-id',
+        issuer: 'https://unlisted-issuer.example/',
+        audience: AUDIENCE,
+        expiresIn: 300,
+      },
+    );
 
     await expect(service.validateToken(token)).rejects.toBeInstanceOf(
       UnauthorizedException,
@@ -287,12 +293,16 @@ describe('JwtService validation', () => {
 
   it('rejects an RS256 token without a key ID', async () => {
     const signingKeySpy = jest.spyOn(JwksClient.prototype, 'getSigningKey');
-    const token = sign({ roles: [UserRole.Admin] }, privateKey, {
-      algorithm: 'RS256',
-      issuer: ALLOWED_ISSUER,
-      audience: AUDIENCE,
-      expiresIn: 300,
-    });
+    const token = sign(
+      { emailVerified: true, roles: [UserRole.Admin] },
+      privateKey,
+      {
+        algorithm: 'RS256',
+        issuer: ALLOWED_ISSUER,
+        audience: AUDIENCE,
+        expiresIn: 300,
+      },
+    );
 
     await expect(service.validateToken(token)).rejects.toBeInstanceOf(
       UnauthorizedException,
@@ -303,6 +313,7 @@ describe('JwtService validation', () => {
   it('accepts a legacy HS256 admin token without kid or audience', async () => {
     const token = sign(
       {
+        emailVerified: true,
         roles: [UserRole.Admin],
         userId: '12345',
         handle: 'admin-user',
@@ -326,11 +337,15 @@ describe('JwtService validation', () => {
   });
 
   it('rejects an HS256 token signed with a different secret', async () => {
-    const token = sign({ roles: [UserRole.Admin] }, 'wrong-secret', {
-      algorithm: 'HS256',
-      issuer: ALLOWED_ISSUER,
-      expiresIn: 300,
-    });
+    const token = sign(
+      { emailVerified: true, roles: [UserRole.Admin] },
+      'wrong-secret',
+      {
+        algorithm: 'HS256',
+        issuer: ALLOWED_ISSUER,
+        expiresIn: 300,
+      },
+    );
 
     await expect(service.validateToken(token)).rejects.toBeInstanceOf(
       UnauthorizedException,
@@ -339,11 +354,15 @@ describe('JwtService validation', () => {
 
   it('still verifies signatures when NODE_ENV is missing', async () => {
     delete process.env.NODE_ENV;
-    const token = sign({ roles: [UserRole.Admin] }, 'wrong-secret', {
-      algorithm: 'HS256',
-      issuer: ALLOWED_ISSUER,
-      expiresIn: 300,
-    });
+    const token = sign(
+      { emailVerified: true, roles: [UserRole.Admin] },
+      'wrong-secret',
+      {
+        algorithm: 'HS256',
+        issuer: ALLOWED_ISSUER,
+        expiresIn: 300,
+      },
+    );
 
     await expect(service.validateToken(token)).rejects.toBeInstanceOf(
       UnauthorizedException,
@@ -352,11 +371,15 @@ describe('JwtService validation', () => {
 
   it('rejects an HS256 token when AUTH_SECRET is unavailable', async () => {
     AuthConfig.authSecret = undefined;
-    const token = sign({ roles: [UserRole.Admin] }, AUTH_SECRET, {
-      algorithm: 'HS256',
-      issuer: ALLOWED_ISSUER,
-      expiresIn: 300,
-    });
+    const token = sign(
+      { emailVerified: true, roles: [UserRole.Admin] },
+      AUTH_SECRET,
+      {
+        algorithm: 'HS256',
+        issuer: ALLOWED_ISSUER,
+        expiresIn: 300,
+      },
+    );
 
     await expect(service.validateToken(token)).rejects.toBeInstanceOf(
       UnauthorizedException,
@@ -364,11 +387,15 @@ describe('JwtService validation', () => {
   });
 
   it('rejects an expired HS256 admin token', async () => {
-    const token = sign({ roles: [UserRole.Admin] }, AUTH_SECRET, {
-      algorithm: 'HS256',
-      issuer: ALLOWED_ISSUER,
-      expiresIn: -60,
-    });
+    const token = sign(
+      { emailVerified: true, roles: [UserRole.Admin] },
+      AUTH_SECRET,
+      {
+        algorithm: 'HS256',
+        issuer: ALLOWED_ISSUER,
+        expiresIn: -60,
+      },
+    );
 
     await expect(service.validateToken(token)).rejects.toBeInstanceOf(
       UnauthorizedException,
@@ -378,6 +405,7 @@ describe('JwtService validation', () => {
   it('accepts an HS256 admin token with a non-M2M audience', async () => {
     const token = sign(
       {
+        emailVerified: true,
         roles: [UserRole.Admin],
         userId: '12345',
         scope: 'openid profile offline_access',
@@ -423,11 +451,15 @@ describe('JwtService validation', () => {
   });
 
   it('rejects unsupported signing algorithms', async () => {
-    const token = sign({ roles: [UserRole.Admin] }, AUTH_SECRET, {
-      algorithm: 'HS384',
-      issuer: ALLOWED_ISSUER,
-      expiresIn: 300,
-    });
+    const token = sign(
+      { emailVerified: true, roles: [UserRole.Admin] },
+      AUTH_SECRET,
+      {
+        algorithm: 'HS384',
+        issuer: ALLOWED_ISSUER,
+        expiresIn: 300,
+      },
+    );
 
     await expect(service.validateToken(token)).rejects.toBeInstanceOf(
       UnauthorizedException,

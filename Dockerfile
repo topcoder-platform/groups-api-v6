@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 
-ARG NODE_VERSION=26.5.1
+ARG NODE_VERSION=26.13.1
 ARG PNPM_VERSION=11.15.1
 
 FROM node:${NODE_VERSION}-alpine3.24 AS build
@@ -22,7 +22,7 @@ RUN node node_modules/prisma/build/index.js generate
 
 FROM alpine:3.24 AS runtime
 
-ARG ALPINE_NODE_VERSION=26.5.1-r0
+ARG ALPINE_NODE_VERSION=26.13.1-r0
 ARG OPENSSL_VERSION=3.5.8-r0
 
 # Use Alpine's dynamically linked Node.js package so the runtime receives the
@@ -33,7 +33,7 @@ RUN apk upgrade --no-cache \
         bash \
         "libcrypto3>=${OPENSSL_VERSION}" \
         "libssl3>=${OPENSSL_VERSION}" \
-        "nodejs-current>=${ALPINE_NODE_VERSION}" \
+        "nodejs-current>=${ALPINE_NODE_VERSION}" "zlib>=1.4-r0" \
     && addgroup -S -g 10001 app \
     && adduser -S -D -H -h /app -u 10001 -G app app
 

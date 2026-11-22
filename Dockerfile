@@ -23,7 +23,7 @@ RUN node node_modules/prisma/build/index.js generate
 FROM alpine:3.24 AS runtime
 
 ARG ALPINE_NODE_VERSION=26.13.1-r0
-ARG OPENSSL_VERSION=3.5.8-r0
+ARG OPENSSL_VERSION=3.5.9-r1
 
 # Use Alpine's dynamically linked Node.js package so the runtime receives the
 # patched system OpenSSL libraries without carrying npm or Node.js headers.

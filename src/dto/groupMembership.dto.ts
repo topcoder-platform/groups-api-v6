@@ -12,9 +12,9 @@ import { PaginationDto } from './pagination.dto';
 import {
   MemberShipType,
   memberShipAllTypes,
-} from 'src/shared/enums/memberShipType.enum';
+} from '../shared/enums/memberShipType.enum';
 import { Transform } from 'class-transformer';
-import { transformBoolean } from 'src/shared/helper';
+import { transformBoolean } from '../shared/helper';
 
 export class AddGroupMemberBulkItemDto {
   @ApiProperty({

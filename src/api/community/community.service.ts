@@ -4,9 +4,9 @@ import {
   CommunityCriteria,
   CommunityListItemDto,
   CommunityMetaResponseDto,
-} from 'src/dto/community.dto';
-import { PaginatedResponse } from 'src/dto/pagination.dto';
-import { PrismaService } from 'src/shared/modules/global/prisma.service';
+} from '../../dto/community.dto';
+import { PaginatedResponse } from '../../dto/pagination.dto';
+import { PrismaService } from '../../shared/modules/global/prisma.service';
 
 /**
  * Handles retrieval of community metadata records from the database.

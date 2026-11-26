@@ -20,16 +20,16 @@ import {
   UpdateGroupDto,
   PatchGroupDto,
   GetGroupResponseDto,
-} from 'src/dto/group.dto';
-import { PaginatedResponse } from 'src/dto/pagination.dto';
-import { CommonConfig } from 'src/shared/config/common.config';
-import { GroupStatus } from 'src/shared/enums/groupStatus.enum';
-import { MemberShipType } from 'src/shared/enums/memberShipType.enum';
+} from '../../dto/group.dto';
+import { PaginatedResponse } from '../../dto/pagination.dto';
+import { CommonConfig } from '../../shared/config/common.config';
+import { GroupStatus } from '../../shared/enums/groupStatus.enum';
+import { MemberShipType } from '../../shared/enums/memberShipType.enum';
 import {
   JwtUser,
   isAdmin as checkIsAdmin,
-} from 'src/shared/modules/global/jwt.service';
-import { PrismaService } from 'src/shared/modules/global/prisma.service';
+} from '../../shared/modules/global/jwt.service';
+import { PrismaService } from '../../shared/modules/global/prisma.service';
 
 import {
   omitAdminFields,
@@ -38,9 +38,9 @@ import {
   ensureGroupMember,
   parseCommaSeparatedString,
   postBusEvent,
-} from 'src/shared/helper';
+} from '../../shared/helper';
 
-import { M2MService } from 'src/shared/modules/global/m2m.service';
+import { M2MService } from '../../shared/modules/global/m2m.service';
 
 const ADMIN_GROUP_FIELDS: string[] = [];
 

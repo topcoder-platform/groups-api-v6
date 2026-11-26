@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { HttpModule } from '@nestjs/axios';
-import { GlobalProvidersModule } from 'src/shared/modules/global/globalProviders.module';
+import { GlobalProvidersModule } from '../shared/modules/global/globalProviders.module';
 import { HealthCheckController } from './health-check/healthCheck.controller';
 import { GroupController } from './group/group.controller';
 import { GroupMembershipController } from './group-membership/groupMembership.controller';

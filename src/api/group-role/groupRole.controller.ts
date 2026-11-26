@@ -23,14 +23,14 @@ import {
   GroupRoleCriteria,
   GroupRoleResponseDto,
   GroupRoleDto,
-} from 'src/dto/groupRole.dto';
-import { UserRole } from 'src/shared/enums/userRole.enum';
-import { Roles } from 'src/shared/guards/tokenRoles.guard';
-import { Scopes } from 'src/shared/decorators/scopes.decorator';
-import { Scope } from 'src/shared/enums/scopes.enum';
-import { JwtUser } from 'src/shared/modules/global/jwt.service';
+} from '../../dto/groupRole.dto';
+import { UserRole } from '../../shared/enums/userRole.enum';
+import { Roles } from '../../shared/guards/tokenRoles.guard';
+import { Scopes } from '../../shared/decorators/scopes.decorator';
+import { Scope } from '../../shared/enums/scopes.enum';
+import { JwtUser } from '../../shared/modules/global/jwt.service';
 import { GroupRoleService } from './groupRole.service';
-import { setResHeader } from 'src/shared/helper';
+import { setResHeader } from '../../shared/helper';
 
 @ApiTags('GroupRole')
 @Controller('/group-roles/users')

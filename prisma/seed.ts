@@ -1,8 +1,9 @@
+import { createPostgresAdapter } from '../src/prisma-adapter';
 import { Prisma, PrismaClient } from '@prisma/client';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({ adapter: createPostgresAdapter(process.env.DATABASE_URL) });
 
 const ACTIVE_COMMUNITY_IDS = [
   'wipro',

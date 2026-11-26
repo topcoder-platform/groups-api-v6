@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
 import { PaginationDto } from './pagination.dto';
-import { GroupRole } from 'src/shared/enums/groupRole.enum';
+import { GroupRole } from '../shared/enums/groupRole.enum';
 import { Transform } from 'class-transformer';
 
 export class GroupRoleDto {

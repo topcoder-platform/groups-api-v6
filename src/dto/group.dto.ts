@@ -11,13 +11,13 @@ import {
 } from 'class-validator';
 import { PaginationDto } from './pagination.dto';
 import { Transform } from 'class-transformer';
-import { transformBoolean } from 'src/shared/helper';
-import { ALLOWED_FIELD_NAMES } from 'src/api/group/group.service';
+import { transformBoolean } from '../shared/helper';
+import { ALLOWED_FIELD_NAMES } from '../api/group/group.service';
 import {
   MemberShipType,
   memberShipAllTypes,
-} from 'src/shared/enums/memberShipType.enum';
-import { GroupStatus, groupAllStatus } from 'src/shared/enums/groupStatus.enum';
+} from '../shared/enums/memberShipType.enum';
+import { GroupStatus, groupAllStatus } from '../shared/enums/groupStatus.enum';
 
 export class CreateGroupDto {
   @ApiProperty({

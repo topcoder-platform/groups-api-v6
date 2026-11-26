@@ -2,7 +2,7 @@
 
 Group API built on modern frameworks for managing all group-related Topcoder needs.
 
-Use Node.js 26.5.1 and pnpm 11.15.1. Run `nvm use` in this project before running pnpm commands.
+Use Node.js 26.13.1 and pnpm 11.15.1. Run `nvm use` in this project before running pnpm commands.
 
 The production image runs as the unprivileged `app` user. Its Alpine 3.24
 runtime installs Node.js >=26.5.1 and system OpenSSL >=3.5.8 from the Alpine

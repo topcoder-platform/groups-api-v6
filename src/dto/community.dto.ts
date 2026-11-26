@@ -2,7 +2,7 @@ import { Transform } from 'class-transformer';
 import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { PaginationDto } from './pagination.dto';
-import { transformBoolean } from 'src/shared/helper';
+import { transformBoolean } from '../shared/helper';
 
 /**
  * Represents one menu item displayed in community navigation.

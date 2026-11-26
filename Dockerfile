@@ -33,7 +33,7 @@ RUN apk upgrade --no-cache \
         bash \
         "libcrypto3>=${OPENSSL_VERSION}" \
         "libssl3>=${OPENSSL_VERSION}" \
-        "nodejs-current>=${ALPINE_NODE_VERSION}" "zlib>=1.4-r0" \
+        'nodejs-current~26.13.1' "zlib>=1.4-r0" \
     && addgroup -S -g 10001 app \
     && adduser -S -D -H -h /app -u 10001 -G app app
 
@@ -46,6 +46,7 @@ WORKDIR /app
 COPY --from=build --chown=app:app /app/dist ./dist
 COPY --from=build --chown=app:app /app/node_modules ./node_modules
 COPY --from=build --chown=app:app /app/prisma ./prisma
+COPY --from=build --chown=app:app /app/prisma.config.ts ./prisma.config.ts
 COPY --from=build --chown=app:app /app/package.json ./package.json
 COPY --from=build --chown=app:app /app/appStartUp.sh ./appStartUp.sh
 RUN chmod 0555 appStartUp.sh

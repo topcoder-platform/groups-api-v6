@@ -1,3 +1,4 @@
+import { createPostgresAdapter } from '../../../prisma-adapter';
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { PrismaClient, Prisma } from '@prisma/client';
 import { LoggerService } from './logger.service';
@@ -24,11 +25,7 @@ export class PrismaService
         { level: 'error', emit: 'event' },
       ],
       // Set connection pool configuration
-      datasources: {
-        db: {
-          url: process.env.DATABASE_URL,
-        },
-      },
+      adapter: createPostgresAdapter(process.env.DATABASE_URL),
     });
 
     this.logger = LoggerService.forRoot('PrismaService');

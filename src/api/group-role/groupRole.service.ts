@@ -9,21 +9,21 @@ import {
   GroupRoleDto,
   GroupRoleResponseDto,
   GroupRoleCriteria,
-} from 'src/dto/groupRole.dto';
-import { PaginatedResponse } from 'src/dto/pagination.dto';
-import { CommonConfig } from 'src/shared/config/common.config';
-import { MemberShipType } from 'src/shared/enums/memberShipType.enum';
+} from '../../dto/groupRole.dto';
+import { PaginatedResponse } from '../../dto/pagination.dto';
+import { CommonConfig } from '../../shared/config/common.config';
+import { MemberShipType } from '../../shared/enums/memberShipType.enum';
 import {
   JwtUser,
   isAdmin as checkIsAdmin,
-} from 'src/shared/modules/global/jwt.service';
-import { PrismaService } from 'src/shared/modules/global/prisma.service';
+} from '../../shared/modules/global/jwt.service';
+import { PrismaService } from '../../shared/modules/global/prisma.service';
 
 import {
   checkGroupExists,
   ensureUserExists,
   postBusEvent,
-} from 'src/shared/helper';
+} from '../../shared/helper';
 
 @Injectable()
 export class GroupRoleService {

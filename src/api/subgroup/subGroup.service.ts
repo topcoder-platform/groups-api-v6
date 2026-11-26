@@ -4,16 +4,16 @@ import {
   Injectable,
   Logger,
 } from '@nestjs/common';
-import { CreateGroupDto, GroupResponseDto } from 'src/dto/group.dto';
+import { CreateGroupDto, GroupResponseDto } from '../../dto/group.dto';
 
-import { CommonConfig } from 'src/shared/config/common.config';
-import { GroupRole } from 'src/shared/enums/groupRole.enum';
-import { MemberShipType } from 'src/shared/enums/memberShipType.enum';
+import { CommonConfig } from '../../shared/config/common.config';
+import { GroupRole } from '../../shared/enums/groupRole.enum';
+import { MemberShipType } from '../../shared/enums/memberShipType.enum';
 import {
   JwtUser,
   isAdmin as checkIsAdmin,
-} from 'src/shared/modules/global/jwt.service';
-import { PrismaService } from 'src/shared/modules/global/prisma.service';
+} from '../../shared/modules/global/jwt.service';
+import { PrismaService } from '../../shared/modules/global/prisma.service';
 
 import {
   checkGroupExists,
@@ -21,7 +21,7 @@ import {
   deleteGroupCascade,
   hasGroupRole,
   postBusEvent,
-} from 'src/shared/helper';
+} from '../../shared/helper';
 
 @Injectable()
 export class SubGroupService {

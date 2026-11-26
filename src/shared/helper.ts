@@ -7,14 +7,14 @@ import {
 import { omit, assignIn, filter, forEach, includes, pick, some } from 'lodash';
 import { Request, Response } from 'express';
 import * as qs from 'qs';
-import { PrismaService } from 'src/shared/modules/global/prisma.service';
-import { GroupStatus } from 'src/shared/enums/groupStatus.enum';
-import { GroupRole } from 'src/shared/enums/groupRole.enum';
-import { MemberShipType } from 'src/shared/enums/memberShipType.enum';
+import { PrismaService } from './modules/global/prisma.service';
+import { GroupStatus } from './enums/groupStatus.enum';
+import { GroupRole } from './enums/groupRole.enum';
+import { MemberShipType } from './enums/memberShipType.enum';
 import { createBusApiClient as busApi } from 'tc-core-library-js';
-import { CommonConfig } from 'src/shared/config/common.config';
+import { CommonConfig } from './config/common.config';
 import { validate } from 'uuid';
-import { JwtUser } from 'src/shared/modules/global/jwt.service';
+import { JwtUser } from './modules/global/jwt.service';
 
 const ADMIN_FIELDS = ['createdBy', 'updatedBy'];
 

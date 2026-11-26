@@ -5,7 +5,7 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { ApiOperation, ApiProperty, ApiTags } from '@nestjs/swagger';
-import { PrismaService } from 'src/shared/modules/global/prisma.service';
+import { PrismaService } from '../../shared/modules/global/prisma.service';
 
 export class GetHealthCheckResponseDto {
   @ApiProperty({

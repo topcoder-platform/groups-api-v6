@@ -11,13 +11,13 @@ import {
   CommunityCriteria,
   CommunityListItemDto,
   CommunityMetaResponseDto,
-} from 'src/dto/community.dto';
-import { Scope } from 'src/shared/enums/scopes.enum';
-import { UserRole } from 'src/shared/enums/userRole.enum';
-import { setResHeader } from 'src/shared/helper';
-import { Scopes } from 'src/shared/decorators/scopes.decorator';
-import { Roles } from 'src/shared/guards/tokenRoles.guard';
-import { JwtUser, isAdmin } from 'src/shared/modules/global/jwt.service';
+} from '../../dto/community.dto';
+import { Scope } from '../../shared/enums/scopes.enum';
+import { UserRole } from '../../shared/enums/userRole.enum';
+import { setResHeader } from '../../shared/helper';
+import { Scopes } from '../../shared/decorators/scopes.decorator';
+import { Roles } from '../../shared/guards/tokenRoles.guard';
+import { JwtUser, isAdmin } from '../../shared/modules/global/jwt.service';
 import { CommunityService } from './community.service';
 
 /**
